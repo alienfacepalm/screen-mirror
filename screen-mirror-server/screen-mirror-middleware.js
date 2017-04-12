@@ -14,15 +14,25 @@ app.use(express.static(path.join(__dirname, '/public')))
 let server = http.createServer(app);
 let wss = new WebSocketServer({server: server});
 
+//Create WebSocket for client to connect to
 wss.on('connection', (ws) => {
+
   console.info(`======] WebSocket client connected [======`);
 
+  //Create minicap stream listener
   let stream = net.connect({port: MINICAP_PORT});
 
   stream.on('error', () => {
-    console.error("Be sure to run `adb forward tcp:1717 localabstract:minicap`");
+    console.error("!!!===] Be sure to run `adb forward tcp:1717 localabstract:minicap` [===!!!");
     process.exit(1);
-  })
+  });
+
+  stream.on('readable', tryRead);
+
+  ws.on('close', function() {
+    console.info(`======] Lost a client [======`);
+    stream.end();
+  });
 
   let readBannerBytes = 0;
   let bannerLength = 2;
@@ -114,15 +124,15 @@ wss.on('connection', (ws) => {
           cursor += 1;
           readFrameBytes += 1;
           console.info(`======] headerbyte%d(val=%d) [======`, readFrameBytes, frameBodyLength);
-        }else {
+        }else{
           if (len - cursor >= frameBodyLength) {
-            console.info('bodyfin(len=%d,cursor=%d)', frameBodyLength, cursor);
+            console.info(`======] bodyfin(len=%d,cursor=%d) [======`, frameBodyLength, cursor);
 
             frameBody = Buffer.concat([frameBody, chunk.slice(cursor, cursor + frameBodyLength)]);
 
             // Sanity check for JPG header, only here for debugging purposes.
             if (frameBody[0] !== 0xFF || frameBody[1] !== 0xD8) {
-              console.error(`Frame body does not start with JPG header`, frameBody);
+              console.error(`======] Frame body does not start with JPG header [======`, frameBody);
               process.exit(1);
             }
 
@@ -145,13 +155,7 @@ wss.on('connection', (ws) => {
     }
   }
 
-  stream.on('readable', tryRead);
-
-  ws.on('close', function() {
-    console.info(`======] Lost a client [======`);
-    stream.end();
-  })
-})
+});
 
 server.listen(PORT);
-console.info(`======] Listening on port %d[======`, PORT);
+console.info(`======] Listening on port %d [======`, PORT);
