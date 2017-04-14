@@ -86,7 +86,7 @@ class Screen extends Component {
 		this.commands.push(`u 0`);
 		this.commands.push(`c`);
 
-		console.log(`======] SWIPE ${this.commands} [======`);
+		console.log(`======] Interaction ${this.commands} [======`);
 
 		this.sendCommands();
 	}
