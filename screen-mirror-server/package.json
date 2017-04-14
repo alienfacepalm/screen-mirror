@@ -4,6 +4,7 @@
   "description": "",
   "main": "screen-mirror-middleware.js",
   "dependencies": {
+    "adbkit": "^2.9.0",
     "bufferutil": "^3.0.0",
     "express": "^4.15.2",
     "http": "0.0.0",

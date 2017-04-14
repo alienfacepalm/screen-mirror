@@ -3,6 +3,7 @@ const http = require('http');
 const express = require('express');
 const path = require('path');
 const net = require('net');
+const exec = require('child_process').exec;
 
 const MINICAP_PORT = 1717;
 const MINITOUCH_PORT = 1111;
@@ -14,10 +15,28 @@ app.use(express.static(path.join(__dirname, '/public')))
 let server = http.createServer(app);
 let wss = new WebSocketServer({server: server});
 
+
+let resolution = null;
+exec('adb shell wm size', (error, stdout, stderr) => {
+
+  if(error || stderr){
+    return;
+  }
+  let dimensions = stdout.split(':')[1].trim();
+  let width = dimensions.split('x')[0];
+  let height = dimensions.split('x')[1];
+  resolution = JSON.stringify({resolution:{width: width, height: height}});
+});
+
 //Create WebSocket for client to connect to
 wss.on('connection', (ws) => {
 
   console.info(`======] WebSocket client connected [======`);
+
+  if(resolution){
+    console.log(`======] Sending Resolution to Client [======`, resolution);
+    ws.send(resolution);
+  }
 
   //====== MINICAP ======
   let screenStream = net.connect({port: MINICAP_PORT});
