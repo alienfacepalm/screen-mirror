@@ -1,5 +1,6 @@
 import React, {Component} from 'react';
 
+import isJSON from 'is-json';
 import {Icon} from 'react-fa';
 
 class Screen extends Component {
@@ -9,19 +10,41 @@ class Screen extends Component {
 
 		this.endpoint = 'ws://192.168.7.78:9002';
 		this.websocket = new WebSocket(this.endpoint);
-		this.deviceWidth = 1200;
-		this.deviceHeight = 1920;
+
 		this.commands = [];
 
 		//This will be pulled from redux as part of device state
+		//Socket server sends resolution from ADB on connection
 		this.state = {
 			swiping: false,
 			device: {
-				width: this.deviceWidth,
-				height: this.deviceHeight
+				width: null,
+				height: null
 			}
 		};
 
+	}
+
+	initializeCanvas(){
+		console.log(`======] Init Canvas [======`, this.state);
+
+		if(this.state.device.width && this.state.device.height){
+			this.canvas = document.createElement('canvas');
+			this.canvas.width = this.state.device.width/2;
+			this.canvas.height = this.state.device.height/2;
+			this.canvas.style = 'margin: 50px; border: 1px solid black; cursor: pointer;';
+
+			this.canvas.onmouseover = this.cursorOver.bind(this);
+			this.canvas.onmouseout = this.cursorOut.bind(this);
+			this.canvas.onmousedown = this.interactStart.bind(this);
+			this.canvas.onmousemove = this.interactMove.bind(this);
+			this.canvas.onmouseup = this.interactEnd.bind(this);
+			
+			document.getElementById('screen-container').appendChild(this.canvas)
+			this.ctx = this.canvas.getContext('2d');
+		}else{
+			alert(`Device resolution failed to be detected`);
+		}
 	}
 
 	componentDidMount() {
@@ -29,27 +52,26 @@ class Screen extends Component {
 
 		this.screenContainer = document.getElementById('screen-container');
 		this.screenContainer.onmousedown = this.screenContainerDown.bind(this);
-
-		this.canvas = document.createElement('canvas');
-		this.canvas.width = this.deviceWidth/2;
-		this.canvas.height = this.deviceHeight/2;
-		this.canvas.style = 'margin: 50px; border: 1px solid black; cursor: pointer;';
-
-		this.canvas.onmouseover = this.cursorOver.bind(this);
-		this.canvas.onmouseout = this.cursorOut.bind(this);
-		this.canvas.onmousedown = this.interactStart.bind(this);
-		this.canvas.onmousemove = this.interactMove.bind(this);
-		this.canvas.onmouseup = this.interactEnd.bind(this);
-		
-		document.getElementById('screen-container').appendChild(this.canvas)
-		this.ctx = this.canvas.getContext('2d');
-
+	
 		this.websocket.onopen = () => {
 			console.log(`======] WebSocket Open [======`);
 		}
 
 		this.websocket.onmessage = (payload) => {
-			this.update(payload.data);
+			if(isJSON(payload.data)){
+				let data = JSON.parse(payload.data);
+				if(data.resolution){
+						this.setState({device: {
+										width: data.resolution.width,
+						                height: data.resolution.height
+						               }
+						             });	
+				}
+				this.initializeCanvas();
+			}else{
+				//jpeg blob
+				this.updateImage(payload.data);
+			}
 		}
 	}
 
@@ -125,7 +147,7 @@ class Screen extends Component {
 		}
 	}
 
-	update(data){
+	updateImage(data){
 		let blob = new Blob([data], {type: 'image/jpeg'});
 		let image = new Image();
 
