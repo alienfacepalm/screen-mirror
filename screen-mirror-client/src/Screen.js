@@ -15,8 +15,7 @@ class Screen extends Component {
 
 		this.commands = [];
 
-		//This will be pulled from redux as part of device state
-		//Socket server sends resolution from ADB on connection
+		//State will be done with Redux when moved to MCB
 		this.state = {
 			swiping: false,
 			device: {
