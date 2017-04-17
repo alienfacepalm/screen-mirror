@@ -3,12 +3,14 @@ import React, {Component} from 'react';
 import isJSON from 'is-json';
 import {Icon} from 'react-fa';
 
+import environment from '../environment';
+
 class Screen extends Component {
 
 	constructor(props){
 		super(props);
 
-		this.endpoint = 'ws://192.168.7.78:9002';
+		this.endpoint = `${environment.middleware.protocol}://${environment.middleware.endpoint}:${environment.middleware.port}`;
 		this.websocket = new WebSocket(this.endpoint);
 
 		this.commands = [];
@@ -22,7 +24,6 @@ class Screen extends Component {
 				height: null
 			}
 		};
-
 	}
 
 	initializeCanvas(){
