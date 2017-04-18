@@ -1,0 +1,31 @@
+package ScreenMirror;
+syntax = 'proto3';
+
+message TouchDown {
+  required string seq = 1;
+  required uint32 contact = 2;
+  required float x = 3;
+  required float y = 4;
+  optional float pressure = 5;
+}
+
+message TouchMove {
+  required string seq = 1;
+  required uint32 contact = 2;
+  required float x = 3;
+  required float y = 4;
+  optional float pressure = 5;
+}
+
+message TouchUp {
+  required string seq = 1;
+  required uint32 contact = 2;
+}
+
+message TouchCommit {
+  required string seq = 1;
+}
+
+message TouchReset {
+  required string seq = 1;
+}

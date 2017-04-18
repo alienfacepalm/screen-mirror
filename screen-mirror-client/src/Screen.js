@@ -2,6 +2,7 @@ import React, {Component} from 'react';
 
 import isJSON from 'is-json';
 import {Icon} from 'react-fa';
+import ProtoBuf from 'protobufjs';
 
 import environment from '../environment';
 
@@ -10,10 +11,19 @@ class Screen extends Component {
 	constructor(props){
 		super(props);
 
+		this.ctx = null;
+		this.canvas = null;
 		this.endpoint = `${environment.middleware.protocol}://${environment.middleware.endpoint}:${environment.middleware.port}`;
 		this.websocket = new WebSocket(this.endpoint);
 
 		this.commands = [];
+
+		//protobuf commands
+		this.touchDown = null;
+		this.touchMove = null;
+		this.touchUp = null;
+		this.touchCommit = null;
+		this.touchReset = null;
 
 		//State will be done with Redux when moved to MCB
 		this.state = {
@@ -58,6 +68,7 @@ class Screen extends Component {
 		}
 
 		this.websocket.onmessage = (payload) => {
+			//When ported to MCB this change as well as the socket server
 			if(isJSON(payload.data)){
 				let data = JSON.parse(payload.data);
 				if(data.resolution){
@@ -73,6 +84,24 @@ class Screen extends Component {
 				this.updateImage(payload.data);
 			}
 		}
+
+		//Protobuf
+		ProtoBuf.load('../screenmirror.proto', (error, root) => {
+
+			if(error){
+				throw error;
+			}
+
+			console.log(`======] Loading ProtoBuf Commands [======`);
+
+			this.touchDown = root.lookupType('ScreenMirror.TouchDown');
+			this.touchMove = root.lookupType('ScreenMirror.TouchMove');
+			this.touchUp = root.lookupType('ScreenMirror.TouchUp');
+			this.touchCommit = root.lookupType('ScreenMirror.TouchCommit');
+			this.touchReset = root.lookupType('ScreenMirror.TouchReset');
+
+		});
+
 	}
 
 	calculatePosition(event){
@@ -82,13 +111,23 @@ class Screen extends Component {
 		return {x: x, y: y};
 	}
 
-	reset(){
-		console.log(`======] Attemping Minitouch Reset [======`);
-		this.commands.push(`r`);
-		this.commands.push(`c`);
-		this.sendCommands();
+	//TODO: normalize for all commands: down, move, up, commit, reset
+	//ProtoBuf commands
+	sendTouchDown(payload){
+		let message = this.touchDown.create({
+			seq: 'd',
+			contact: 0,
+			x: 0,
+			pressure: 50
+		});
+
+		let buffer = this.touchDown.encode(message).finish();
+
+		this.websocket.send(buffer);
 	}
 
+
+	//Standard commands
 	sendCommands(){
 		console.log(`======] Commands [======`, this.commands);
 
@@ -96,6 +135,8 @@ class Screen extends Component {
 		this.websocket.send(message);
 		this.commands = [];
 	}
+
+	//TODO: gestures
 
 	interactStart(event){
 		this.canvas.style.cursor = 'move';
@@ -123,6 +164,13 @@ class Screen extends Component {
 		this.commands.push(`u 0`);
 		this.commands.push(`c`);
 
+		this.sendCommands();
+	}
+
+	reset(){
+		console.log(`======] Attemping Minitouch Reset [======`);
+		this.commands.push(`r`);
+		this.commands.push(`c`);
 		this.sendCommands();
 	}
 

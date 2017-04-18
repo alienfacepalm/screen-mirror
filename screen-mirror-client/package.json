@@ -5,6 +5,7 @@
   "dependencies": {
     "bufferutil": "^3.0.0",
     "is-json": "^2.0.1",
+    "protobufjs": "^6.7.3",
     "react": "^15.5.4",
     "react-dom": "^15.5.4",
     "react-fa": "^4.1.2",
