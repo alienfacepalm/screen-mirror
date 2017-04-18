@@ -3,12 +3,16 @@ const http = require('http');
 const express = require('express');
 const path = require('path');
 const net = require('net');
+const isJSON = require('is-json');
 const exec = require('child_process').exec;
 
 const MINICAP_PORT = 1717;
 const MINITOUCH_PORT = 1111;
 const PORT = process.env.PORT || 9002;
 const app = express();
+
+//TODO: implement better ERROR handling
+//TODO: implement message queue
 
 app.use(express.static(path.join(__dirname, '/public')))
 
@@ -18,7 +22,6 @@ let wss = new WebSocketServer({server: server});
 
 let resolution = null;
 exec('adb shell wm size', (error, stdout, stderr) => {
-
   if(error || stderr){
     return;
   }
@@ -167,7 +170,8 @@ wss.on('connection', (ws) => {
     if(touchStream.writable){
       touchStream.write(cmd);
     }else{
-      console.error(`!!!===] NOT WRITABLE [===!!!`);
+      //TODO: take action to correct this
+      console.error(`!!!===] NOT WRITABLE, Take action to fix [===!!!`);
     } 
   }
 
@@ -190,10 +194,16 @@ wss.on('connection', (ws) => {
   });
 
   ws.on('message', (message) => {
-    let m = JSON.parse(message);
-    if(m.type === 'input'){
-      let commands = m.commands.join('\r\n');
-      writeTouch(commands+'\r\n');
+    //accept JSON payload
+    if(isJSON(message)){
+      let m = JSON.parse(message);
+      if(m.type === 'input'){
+        let commands = m.commands.join('\r\n');
+        writeTouch(commands+'\r\n');
+      }
+    }else{
+      //assume ProtoBuf
+      //TODO: instantiate ProtoBuf and load screenmirror.proto, decode and write to tcp
     }
   });
 
