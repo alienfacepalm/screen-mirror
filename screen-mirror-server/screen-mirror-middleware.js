@@ -5,44 +5,115 @@ const path = require('path');
 const net = require('net');
 const isJSON = require('is-json');
 const exec = require('child_process').exec;
+const spawn = require('child_process').spawn;
+const ProtoBuf = require('protobufjs');
 
 const MINICAP_PORT = 1717;
 const MINITOUCH_PORT = 1111;
 const PORT = process.env.PORT || 9002;
 const app = express();
 
+//TODO: break out functionality into classes
 //TODO: implement better ERROR handling
-//TODO: implement message queue
+//TODO: implement protobuf
 
 app.use(express.static(path.join(__dirname, '/public')))
 
 let server = http.createServer(app);
 let wss = new WebSocketServer({server: server});
 
-
-let resolution = null;
-exec('adb shell wm size', (error, stdout, stderr) => {
-  if(error || stderr){
-    return;
+let ncSatisified = false;
+let adbSatisfied = false;
+let nc = spawn('nc', ['localhost', '1111']);
+let adb = spawn('adb', ['shell', 'wm', 'size']);
+let device = {
+  device: {
+    maxContacts: null,
+    width: null,
+    height: null, 
+    maxX: null,
+    maxY: null,
+    maxPressure: null
   }
-  let dimensions = stdout.split(':')[1].trim();
-  let width = dimensions.split('x')[0];
-  let height = dimensions.split('x')[1];
-  resolution = JSON.stringify({resolution:{width: width, height: height}});
+};
+
+nc.stdout.on('data', (data) => {
+  console.log(`======] Received Device Touch Info [======`);
+
+  let info = data.toString().split(/\n/)[1].split(/\s/);
+  let maxContacts = info[1];
+  let maxX = info[2];
+  let maxY = info[3];
+  let maxPressure = info[4];
+
+  device.device.maxContacts = maxContacts;
+  device.device.maxX = maxX;
+  device.device.maxY = maxY;
+  device.device.maxPressure = maxPressure;
+
+  ncSatisified = true;
 });
+
+nc.stderr.on('data', (data) => {
+  console.log(`!!!===] Error Fetching Touch Resolution [===!!!`, data.toString());
+  ncSatisfied = false;
+});
+
+adb.stdout.on('data', (data) => {
+  console.log(`======] Received Device Resolution Info [======`);
+  let info = data.toString().split(':')[1].trim();
+  let width = info.split('x')[0];
+  let height = info.split('x')[1];
+  device.device.width = width;
+  device.device.height = height;
+
+  adbSatisfied = true;
+});
+
+adb.stderr.on('data', (data) => {
+  console.log(`!!!===] Error Fetching Touch Resolution [===!!!`, data.toString());
+  adbSatisfied = false;
+});
+
+const sendKeyEvent = (key) => {
+  exec(`adb shell input keyevent ${key}`, (error, stdout, stderr) => {
+    if(error || stderr){
+      return;
+    }
+    console.log(stdout);
+  });
+}
+
+const keyEvents = (type) => {
+  console.log(`======] KEYEVENTS [=======`, type);
+  switch(type){
+    case 'HOME':
+      sendKeyEvent(3);
+      break;
+    case 'BACK':
+      sendKeyEvent(4);
+      break;
+  }
+ 
+};
 
 //Create WebSocket for client to connect to
 wss.on('connection', (ws) => {
 
-  console.info(`======] WebSocket client connected [======`);
+  console.info(`======] WebSocket client connected [======`, device);
 
-  if(resolution){
-    console.log(`======] Sending Resolution to Client [======`, resolution);
-    ws.send(resolution);
+  if(device){
+    if(ncSatisified && adbSatisfied){
+      ws.send(JSON.stringify(device));
+    }else{
+      console.log(`!!!====] Inadequate Device Info Acquired [===!!!`);
+    }
   }
 
   //====== MINICAP ======
-  let screenStream = net.connect({port: MINICAP_PORT});
+  let screenStream = net.connect(MINICAP_PORT, () => {
+    console.log(`======] Minicap Connected [======`);
+  });
 
   const tryRead = () => {
 
@@ -160,7 +231,7 @@ wss.on('connection', (ws) => {
   });
 
   //====== MINITOUCH ======
-  let touchStream = net.connect({port: MINITOUCH_PORT}, () => {
+  let touchStream = net.connect(MINITOUCH_PORT, () => {
     console.log(`======] Minitouch connected [======`);
   });
 
@@ -176,12 +247,13 @@ wss.on('connection', (ws) => {
   }
 
   touchStream.on('error', (error) => {
-    console.error("!!!===] TOUCH ERROR [===!!!", error);
+    console.error("!!!===] Be sure to run `adb forward tcp:1111 localabstract:minitouch` [===!!!", error);
   });
 
+  touchStream.on('readable', (data) => {});
+
   touchStream.on('data', (data) => {
-    console.log(`======] DATA [======`, data);
-    //touchStream.end();
+    console.log(`======] TOUCH DATA [======`, data.toString());
   });
 
   touchStream.on('end', () => {
@@ -194,12 +266,19 @@ wss.on('connection', (ws) => {
   });
 
   ws.on('message', (message) => {
+    console.log(message);
     //accept JSON payload
     if(isJSON(message)){
       let m = JSON.parse(message);
-      if(m.type === 'input'){
-        let commands = m.commands.join('\r\n');
-        writeTouch(commands+'\r\n');
+
+      switch(m.type){
+        case 'MINITOUCH':
+          let commands = m.commands.join('\r\n');
+          writeTouch(commands+'\r\n');
+          break;
+        case 'KEYEVENT':
+          keyEvents(m.command);
+          break;
       }
     }else{
       //assume ProtoBuf
