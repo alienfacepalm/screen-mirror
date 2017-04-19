@@ -25,12 +25,18 @@ class Screen extends Component {
 		this.touchCommit = null;
 		this.touchReset = null;
 
+		this.pressure = null;
+
 		//State will be done with Redux when moved to MCB
 		this.state = {
 			swiping: false,
 			device: {
 				width: null,
-				height: null
+				height: null,
+				maxX: null,
+				maxY:null,
+				maxContacts: null,
+				maxPressure: null
 			}
 		};
 	}
@@ -69,14 +75,21 @@ class Screen extends Component {
 
 		this.websocket.onmessage = (payload) => {
 			//When ported to MCB this change as well as the socket server
+			
 			if(isJSON(payload.data)){
 				let data = JSON.parse(payload.data);
-				if(data.resolution){
+				console.log(data);
+				if(data.device){
 						this.setState({device: {
-										width: data.resolution.width,
-						                height: data.resolution.height
+										width: data.device.width,
+						                height: data.device.height,
+						                maxX: data.device.maxX,
+						                maxY: data.device.maxY,
+						                maxContacts: data.device.maxContacts,
+						                maxPressure: data.device.maxPressure
 						               }
 						             });	
+					this.pressure = Number(this.state.device.maxPressure)=== 0 ? 0 : 50;
 				}
 				this.initializeCanvas();
 			}else{
@@ -105,8 +118,8 @@ class Screen extends Component {
 	}
 
 	calculatePosition(event){
-		let x = Math.ceil(this.state.device.width/(this.canvas.width/event.offsetX));
-		let y = Math.ceil(this.state.device.height/(this.canvas.height/event.offsetY));
+		let x = Math.ceil(this.state.device.maxX/(this.canvas.width/event.offsetX));
+		let y = Math.ceil(this.state.device.maxY/(this.canvas.height/event.offsetY));
 
 		return {x: x, y: y};
 	}
@@ -118,6 +131,7 @@ class Screen extends Component {
 			seq: 'd',
 			contact: 0,
 			x: 0,
+			y:0,
 			pressure: 50
 		});
 
@@ -126,12 +140,11 @@ class Screen extends Component {
 		this.websocket.send(buffer);
 	}
 
-
 	//Standard commands
 	sendCommands(){
 		console.log(`======] Commands [======`, this.commands);
 
-		let message = JSON.stringify({type: 'input', commands: this.commands});
+		let message = JSON.stringify({type: 'MINITOUCH', commands: this.commands});
 		this.websocket.send(message);
 		this.commands = [];
 	}
@@ -143,14 +156,15 @@ class Screen extends Component {
 		this.setState({swiping: true});
 
 		let pos = this.calculatePosition(event);
-		this.commands.push(`d 0 ${pos.x} ${pos.y} 50`);
+		
+		this.commands.push(`d 0 ${pos.x} ${pos.y} ${this.pressure}`);
 		this.commands.push(`c`);
 	}
 
 	interactMove(event){
 		if(this.state.swiping){
 			let pos = this.calculatePosition(event);
-			this.commands.push(`m 0 ${pos.x} ${pos.y} 50`);
+			this.commands.push(`m 0 ${pos.x} ${pos.y} ${this.pressure}`);
 			this.commands.push(`c`);
 
 			this.sendCommands();
@@ -172,6 +186,20 @@ class Screen extends Component {
 		this.commands.push(`r`);
 		this.commands.push(`c`);
 		this.sendCommands();
+	}
+
+	home(){
+		console.log(`======] Home Command [======`);
+
+		let message = JSON.stringify({type: 'KEYEVENT', command: 'HOME'});
+		this.websocket.send(message);
+	}
+
+	back(){
+		console.log(`======] Home Command [======`);
+
+		let message = JSON.stringify({type: 'KEYEVENT', command: 'BACK'});
+		this.websocket.send(message);
 	}
 
 	screenContainerDown(event){
@@ -196,13 +224,15 @@ class Screen extends Component {
 	}
 
 	updateImage(data){
-		let blob = new Blob([data], {type: 'image/jpeg'});
-		let image = new Image();
+		if(this.ctx){
+			let blob = new Blob([data], {type: 'image/jpeg'});
+			let image = new Image();
 
-		image.onload = () => {
-			this.ctx.drawImage(image, 0, 0, this.canvas.width, this.canvas.height);
-		};
-		image.src = URL.createObjectURL(blob);
+			image.onload = () => {
+				this.ctx.drawImage(image, 0, 0, this.canvas.width, this.canvas.height);
+			};
+			image.src = URL.createObjectURL(blob);
+		}
 	}
 
 	render(){
@@ -210,7 +240,9 @@ class Screen extends Component {
 			<div>
 				<div id="screen-container"></div>
 				<div id="nav-buttons">
-					<Icon onClick={this.reset.bind(this)} className="nav-icons" name="refresh" size="3x" />
+					<Icon onClick={this.home.bind(this)} className="nav-icons" name="home" size="3x" />
+					<div className="barrier"></div>
+					<Icon onClick={this.back.bind(this)} className="nav-icons" name="arrow-left" size="3x" />
 				</div>
 			</div>
 		);
