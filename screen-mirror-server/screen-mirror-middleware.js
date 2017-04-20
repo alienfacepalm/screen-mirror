@@ -20,6 +20,9 @@ const app = express();
 let server = http.createServer(app);
 let wss = new WebSocketServer({server: server});
 
+let screenStream;
+let touchStream;
+
 let ncSatisified = false;
 let adbSatisfied = false;
 let nc = spawn('nc', ['localhost', '1111']);
@@ -79,8 +82,13 @@ adb.stderr.on('data', (data) => {
   adbSatisfied = false;
 });
 
-const sendKeyEvent = (key) => {
-  exec(`adb shell input keyevent ${key}`, (error, stdout, stderr) => {
+//TODO: find faster way
+const sendKeyEvents = (events) => {
+  console.log(`EVENTS: `, events);
+  let inputs = events.map(key => `input keyevent ${key}`).join(' && ');
+  console.log(`INPUTS: `, inputs);
+  //input keyevent ${key}
+  exec(`adb shell ${inputs}`, (error, stdout, stderr) => {
     if(error || stderr){
       return;
     }
@@ -88,17 +96,16 @@ const sendKeyEvent = (key) => {
   });
 }
 
-const keyEvents = (type) => {
-  console.log(`======] KEYEVENTS [=======`, type);
-  switch(type){
-    case 'HOME':
-      sendKeyEvent(3);
-      break;
-    case 'BACK':
-      sendKeyEvent(4);
-      break;
+const writeTouch = (cmd) => {
+  console.log(`======] WRITE TOUCH [======`);
+  console.log(cmd);
+  if(touchStream.writable){
+    touchStream.write(cmd);
+  }else{
+    //TODO: take action to correct this
+    console.error(`!!!===] NOT WRITABLE, Take action to fix [===!!!`);
   } 
-};
+}
 
 //Create WebSocket for client to connect to
 wss.on('connection', (ws) => {
@@ -114,7 +121,7 @@ wss.on('connection', (ws) => {
   }
 
   //====== MINICAP ======
-  let screenStream = net.connect(MINICAP_PORT, () => {
+  screenStream = net.connect(MINICAP_PORT, () => {
     console.log(`======] Minicap Connected [======`);
   });
 
@@ -234,20 +241,9 @@ wss.on('connection', (ws) => {
   });
 
   //====== MINITOUCH ======
-  let touchStream = net.connect(MINITOUCH_PORT, () => {
+  touchStream = net.connect(MINITOUCH_PORT, () => {
     console.log(`======] Minitouch connected [======`);
   });
-
-  const writeTouch = (cmd) => {
-    console.log(`======] WRITE TOUCH [======`);
-    console.log(cmd);
-    if(touchStream.writable){
-      touchStream.write(cmd);
-    }else{
-      //TODO: take action to correct this
-      console.error(`!!!===] NOT WRITABLE, Take action to fix [===!!!`);
-    } 
-  }
 
   touchStream.on('error', (error) => {
     console.error("!!!===] Be sure to run `adb forward tcp:1111 localabstract:minitouch` [===!!!", error);
@@ -280,11 +276,11 @@ wss.on('connection', (ws) => {
           writeTouch(commands+'\r\n');
           break;
         case 'KEYEVENT':
-          keyEvents(m.command);
+          sendKeyEvents(m.commands);
           break;
       }
     }else{
-      //assume ProtoBuf
+      //ProtoBuf
       //TODO: instantiate ProtoBuf and load screenmirror.proto, decode and write to tcp
     }
   });
