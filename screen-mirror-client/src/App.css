@@ -30,3 +30,9 @@
 .nav-icons:hover {
   color: #ccc;
 }
+
+.barrier {
+  display: inline;
+  padding-left: 25px;
+  padding-right: 25px;
+}
