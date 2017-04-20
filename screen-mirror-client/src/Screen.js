@@ -5,6 +5,7 @@ import {Icon} from 'react-fa';
 import ProtoBuf from 'protobufjs';
 
 import environment from '../environment';
+import * as keycodes from './lib/input/keycodes';
 
 class Screen extends Component {
 
@@ -30,6 +31,8 @@ class Screen extends Component {
 		//State will be done with Redux when moved to MCB
 		this.state = {
 			swiping: false,
+			focused: false,
+			shiftDown: false,
 			device: {
 				width: null,
 				height: null,
@@ -46,16 +49,19 @@ class Screen extends Component {
 
 		if(this.state.device.width && this.state.device.height){
 			this.canvas = document.createElement('canvas');
+			this.canvas.id = 'screen-canvas';
 			this.canvas.width = this.state.device.width/2;
 			this.canvas.height = this.state.device.height/2;
 			this.canvas.style = 'margin: 50px; border: 1px solid black; cursor: pointer;';
-
 			this.canvas.onmouseover = this.cursorOver.bind(this);
 			this.canvas.onmouseout = this.cursorOut.bind(this);
 			this.canvas.onmousedown = this.interactStart.bind(this);
 			this.canvas.onmousemove = this.interactMove.bind(this);
 			this.canvas.onmouseup = this.interactEnd.bind(this);
-			
+			this.canvas.onmousewheel = this.mouseWheel.bind(this);
+			document.body.onkeydown = this.keyDown.bind(this);
+			document.body.onkeyup = this.keyUp.bind(this);
+
 			document.getElementById('screen-container').appendChild(this.canvas)
 			this.ctx = this.canvas.getContext('2d');
 		}else{
@@ -149,7 +155,7 @@ class Screen extends Component {
 		this.commands = [];
 	}
 
-	//TODO: gestures
+	//TODO: gestures, mousewheel
 
 	interactStart(event){
 		this.canvas.style.cursor = 'move';
@@ -181,27 +187,6 @@ class Screen extends Component {
 		this.sendCommands();
 	}
 
-	reset(){
-		console.log(`======] Attemping Minitouch Reset [======`);
-		this.commands.push(`r`);
-		this.commands.push(`c`);
-		this.sendCommands();
-	}
-
-	home(){
-		console.log(`======] Home Command [======`);
-
-		let message = JSON.stringify({type: 'KEYEVENT', command: 'HOME'});
-		this.websocket.send(message);
-	}
-
-	back(){
-		console.log(`======] Back Command [======`);
-
-		let message = JSON.stringify({type: 'KEYEVENT', command: 'BACK'});
-		this.websocket.send(message);
-	}
-
 	screenContainerDown(event){
 		console.log(`======] Container down [======`);
 		this.setState({swiping: true});
@@ -209,7 +194,9 @@ class Screen extends Component {
 
 	cursorOver(event){
 		console.log(`======] Cursor over canvas [======`);
+
 		this.canvas.style.cursor = 'pointer';
+		this.setState({focused: true});
 		if(this.state.swiping){
 			this.interactStart(event);
 		}
@@ -217,10 +204,82 @@ class Screen extends Component {
 
 	cursorOut(event){
 		console.log(`======] Cursor left canvas [======`);
+
 		this.canvas.style.cursor = 'pointer';
+		this.setState({focused: false});
 		if(this.state.swiping){
 			this.interactEnd();
 		}
+	}
+
+	mouseWheel(event){
+		console.log(`======] Mouse Wheel [=======`, event);
+		//let deltaY = event.deltaY;
+		//hhhhasdfasdfhasdfasdflet wheelDeltaY = event.wheelDeltaY;
+	}
+
+	reset(){
+		console.log(`======] Attemping Minitouch Reset [======`);
+		this.commands.push(`r`);
+		this.commands.push(`c`);
+		this.sendCommands();
+	}
+
+	//nav keyevents
+
+	keyDown(event){
+		console.log(`======] Key Down [======`, event);
+		event.preventDefault();
+
+		let keycode = event.which;
+		if(keycode === 16){
+			this.setState({shiftDown: true});
+		}
+		
+		//TODO: figure out how to use SHIFT and CAPS lock
+		if(this.state.focused){
+			let androidKeycode = keycodes.map[keycode];
+			console.log(`======] KeyCode ${keycode} -> ${androidKeycode} [======`);
+			if(androidKeycode){
+				let commands = [];
+				if(this.state.shiftDown){
+					commands.push(keycodes.map[16]);
+				}
+				commands.push(androidKeycode);
+				let message = {type: 'KEYEVENT', commands: commands};
+				this.websocket.send(JSON.stringify(message));
+			}
+		}
+	}
+
+	keyUp(event){
+		event.preventDefault();
+		let keycode = event.which;
+		console.log(keycode, 'up');
+		if(keycode === 16){
+			this.setState({shiftDown: false});
+		}
+	}
+
+	menu(){
+		console.log(`======] Menu Command [======`);
+
+		let message = {type: 'KEYEVENT', commands: [keycodes.android[`KEYCODE_APP_SWITCH`]]};
+		this.websocket.send(JSON.stringify(message));
+	}	
+
+	home(){
+		console.log(`======] Home Command [======`);
+
+		let message = {type: 'KEYEVENT', commands: [keycodes.android[`KEYCODE_HOME`]]};
+		this.websocket.send(JSON.stringify(message));
+	}
+
+	back(){
+		console.log(`======] Back Command [======`);
+
+		let message = {type: 'KEYEVENT', commands: [keycodes.android[`KEYCODE_BACK`]]};
+		this.websocket.send(JSON.stringify(message));
 	}
 
 	updateImage(data){
@@ -240,6 +299,8 @@ class Screen extends Component {
 			<div>
 				<div id="screen-container"></div>
 				<div id="nav-buttons">
+					<Icon onClick={this.menu.bind(this)} className="nav-icons" name="bars" size="3x" />
+					<div className="barrier"></div>
 					<Icon onClick={this.home.bind(this)} className="nav-icons" name="home" size="3x" />
 					<div className="barrier"></div>
 					<Icon onClick={this.back.bind(this)} className="nav-icons" name="arrow-left" size="3x" />
