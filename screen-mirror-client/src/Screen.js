@@ -196,7 +196,7 @@ class Screen extends Component {
 	}
 
 	back(){
-		console.log(`======] Home Command [======`);
+		console.log(`======] Back Command [======`);
 
 		let message = JSON.stringify({type: 'KEYEVENT', command: 'BACK'});
 		this.websocket.send(message);
