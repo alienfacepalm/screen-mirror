@@ -52,11 +52,17 @@ nc.stdout.on('data', (data) => {
   device.device.maxPressure = maxPressure;
 
   ncSatisified = true;
+  nc.kill('SIGHUP');
 });
 
 nc.stderr.on('data', (data) => {
   console.log(`!!!===] Error Fetching Touch Resolution [===!!!`, data.toString());
   ncSatisfied = false;
+  nc.kill('SIGHUP');
+});
+
+nc.on('close', (code, signal) => {
+    console.log(`======] Netcat closed: ${signal} [======`);
 });
 
 adb.stdout.on('data', (data) => {
@@ -93,8 +99,7 @@ const keyEvents = (type) => {
     case 'BACK':
       sendKeyEvent(4);
       break;
-  }
- 
+  } 
 };
 
 //Create WebSocket for client to connect to
