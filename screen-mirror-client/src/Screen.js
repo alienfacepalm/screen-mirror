@@ -1,3 +1,6 @@
+//NOTE: this is an unstructured prototype
+//brandonp@mobileintegration-group.com
+
 import React, {Component} from 'react';
 
 import isJSON from 'is-json';

@@ -1,0 +1,96 @@
+html, body {
+	font-family: Arial;
+	margin: 0 auto;
+	text-align: center;
+}
+
+header {
+	position: absolute;
+	height: 50px;
+	top: 0;
+	right: 0;
+	left: 0;
+}
+
+header img {
+	height: 100px;
+}
+
+.container {
+	margin-top: 100px;
+	height: 500px;
+	background: #ccc;
+	border: 1px solid gray;
+}
+
+.head-left {
+	padding-left: 50px;
+	float: left;
+}
+
+.head-right {
+	padding-top: 24px;
+	padding-right: 50px;
+	float: right;
+}
+
+fieldset {
+	margin: 0 auto;
+	margin-top: 20px;
+	width: 80%;
+	background: white;
+}
+
+fieldset legend {
+	font-size: 26px;
+	font-weight: bolder;
+}
+
+fieldset ul {
+	list-style: none;
+	text-align: left;
+}
+
+fieldset ul li {
+	padding: 10px;
+}
+
+fieldset label {
+	font-size: 20px;
+}
+
+fieldset input[type=checkbox]{
+	display: none;
+}
+
+fieldset input[type=checkbox] + label:before {
+	font-family: FontAwesome;
+	display: inline-block;
+}
+
+fieldset input[type=checkbox] + label:before { content: "\f096"; } 
+fieldset input[type=checkbox] + label:before { letter-spacing: 10px; } 
+
+fieldset input[type=checkbox]:checked + label:before { content: "\f046"; } 
+fieldset input[type=checkbox]:checked + label:before { letter-spacing: 5px; } 
+
+#console {
+	padding: 10px;
+	margin: 0 auto;
+	border: 1px solid gray;
+	width: 80%;
+	height: 225px;
+	background: black;
+	color: #00ff00;
+	overflow-y: scroll;
+	overflow-x: hidden;
+	text-align: left;
+}
+
+footer {
+	position: absolute;
+	height: 30px;
+	right: 0;
+	bottom: 0;
+	left: 0;
+}

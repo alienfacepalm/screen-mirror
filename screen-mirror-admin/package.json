@@ -1,0 +1,9 @@
+{
+  "name": "screen-mirror-admin",
+  "version": "0.1.0",
+  "main": "main.js",
+  "dependencies": {
+    "electron": "^1.6.5",
+    "font-awesome": "^4.7.0"
+  }
+}
