@@ -17,8 +17,6 @@ const app = express();
 //TODO: implement better ERROR handling
 //TODO: implement protobuf
 
-app.use(express.static(path.join(__dirname, '/public')))
-
 let server = http.createServer(app);
 let wss = new WebSocketServer({server: server});
 
