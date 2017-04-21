@@ -38,6 +38,11 @@ header img {
 }
 
 fieldset {
+	position: absolute;
+	top: 20px;
+	right: 20px;
+	bottom: 20px;
+	left: 20px;
 	margin: 0 auto;
 	margin-top: 20px;
 	width: 80%;
@@ -86,13 +91,12 @@ fieldset input[type=checkbox]:checked + label:before {
 } 
 
 #console {
+	position: absolute;
+	top: 200px;
+	right: 20px;
+	bottom: 20px;
+	left: 20px;
 	padding: 10px;
-	margin: 0 auto;
-	margin-bottom: 20px;
-	border: 1px solid gray;
-	min-height: 225px;
-	width: 80%;
-	height: auto;
 	background: black;
 	color: #00ff00;
 	overflow-y: scroll;

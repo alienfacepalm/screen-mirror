@@ -1,4 +1,4 @@
-const {app, BrowserWindow} = require('electron');
+const {app, BrowserWindow, dialog} = require('electron');
 const path = require('path');
 const url = require('url');
 
@@ -11,6 +11,11 @@ let win;
 
 const createWindow = () => {
   win = new BrowserWindow({width: 900, height: 700});
+
+  if(process.platform === 'win32'){
+    dialog.showMessageBox({message: `You are on Windows.\r\nMinicap and minitouch currently are only supported in *nix platforms.\r\nDo not expect this to function correctly.`});
+  }
+
   let devTools = new DevTools;
   devTools.init(win);
 
@@ -34,7 +39,7 @@ app.on('window-all-closed', () => {
 });
 
 app.on('activate', () => {
-  if (win === null) {
+  if (!win) {
     createWindow();
   }
 });

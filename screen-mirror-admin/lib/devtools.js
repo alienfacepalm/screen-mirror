@@ -23,6 +23,12 @@ class DevTools {
 		];
 	}
 
+	init(w){
+		this.win = w;
+		const menu = Menu.buildFromTemplate(this.menuTemplate);
+  		Menu.setApplicationMenu(menu);
+	}
+
 	open(item){
 	  if(!this.devToolsOpen){
 	    this.win.webContents.openDevTools();
@@ -34,12 +40,7 @@ class DevTools {
 	    this.devToolsOpen= false;
 	  }
 	}
-
-	init(w){
-		this.win = w;
-		const menu = Menu.buildFromTemplate(this.menuTemplate);
-  		Menu.setApplicationMenu(menu);
-	}
+	
 }
 
 module.exports = DevTools;
