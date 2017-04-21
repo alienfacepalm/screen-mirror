@@ -25,4 +25,4 @@ git submodule update
 cd ../
 ls -lah
 
-echo "Finished. Don't forget to build minicap and minitouch using Android's NDK."
+echo "Finished. Don't forget to build minicap and minitouch using Android's NDK -> https://developer.android.com/ndk/downloads/index.html"

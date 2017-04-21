@@ -1,3 +1,6 @@
+//NOTE: this is an unstructured prototype
+//brandonp@mobileintegration-group.com
+
 const WebSocketServer = require('ws').Server;
 const http = require('http');
 const express = require('express');
@@ -41,23 +44,28 @@ let device = {
 nc.stdout.on('data', (data) => {
   console.log(`======] Received Device Touch Info [======`);
 
-  let info = data.toString().split(/\n/)[1].split(/\s/);
-  let maxContacts = info[1];
-  let maxX = info[2];
-  let maxY = info[3];
-  let maxPressure = info[4];
+  try{
+    let info = data.toString().split(/\n/)[1].split(/\s/);
+    let maxContacts = info[1];
+    let maxX = info[2];
+    let maxY = info[3];
+    let maxPressure = info[4];
 
-  device.device.maxContacts = maxContacts;
-  device.device.maxX = maxX;
-  device.device.maxY = maxY;
-  device.device.maxPressure = maxPressure;
+    device.device.maxContacts = maxContacts;
+    device.device.maxX = maxX;
+    device.device.maxY = maxY;
+    device.device.maxPressure = maxPressure;
 
-  ncSatisified = true;
-  nc.kill('SIGHUP');
+    ncSatisified = true;
+    nc.kill('SIGHUP');
+  }catch(error){
+    console.log(`!!!===] Error Fetching Touch Resolution [===!!!`);
+    nc.kill('SIGHUP');
+  }
 });
 
 nc.stderr.on('data', (data) => {
-  console.log(`!!!===] Error Fetching Touch Resolution [===!!!`, data.toString());
+  console.log(`!!!===] Error Fetching Touch Resolution [===!!!`);
   ncSatisfied = false;
   nc.kill('SIGHUP');
 });
@@ -68,17 +76,22 @@ nc.on('close', (code, signal) => {
 
 adb.stdout.on('data', (data) => {
   console.log(`======] Received Device Resolution Info [======`);
-  let info = data.toString().split(':')[1].trim();
-  let width = info.split('x')[0];
-  let height = info.split('x')[1];
-  device.device.width = width;
-  device.device.height = height;
+  try{
+    let info = data.toString().split(':')[1].trim();
+    let width = info.split('x')[0];
+    let height = info.split('x')[1];
+    device.device.width = width;
+    device.device.height = height;
 
-  adbSatisfied = true;
+    adbSatisfied = true;
+  }catch(error){
+    console.error(`!!!===] Fatal Error Fetching Device Resolution [===!!!`);
+  }
+
 });
 
 adb.stderr.on('data', (data) => {
-  console.log(`!!!===] Error Fetching Touch Resolution [===!!!`, data.toString());
+  console.error(`!!!===] Fatal Error Fetching Device Resolution [===!!!`);
   adbSatisfied = false;
 });
 
