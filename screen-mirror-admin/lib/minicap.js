@@ -12,7 +12,7 @@ class Minicap {
 	start() {
 		console.log(`======] START MINICAP [=======`);
 
-		this.win.webContents.send('update-console', "Minicap started, please wait.\n");
+		this.win.webContents.send('update-console', "Minicap is running.\n");
 
 		this.isRunning = true;
 		let wd = path.resolve(process.cwd(), '../vendor/minicap');
@@ -40,7 +40,7 @@ class Minicap {
 	output(data){
 		console.log(`======] MINICAP STDOUT [======`, data.toString());
 
-		this.win.webContents.send('update-console', data.toString());
+		this.win.webContents.send('update-console', "\n======] MINICAP SAYS [======\n"+data.toString());
 		this.win.webContents.send('update-checkbox', 'minicap', true);
 		this.isRunning = true;
 	}
@@ -48,9 +48,11 @@ class Minicap {
 	error(error){
 		console.log(`======] MINICAP STDERR [======`);
 
-		this.win.webContents.send('update-console', error.toString());
-		this.win.webContents.send('update-checkbox', 'minicap', false);
-		this.isRunning = false;
+		if(error.toLowerCase().includes("error")){
+			this.win.webContents.send('update-console', "\n!!!===] ERROR [===!!!\n"+error.toString());
+			this.win.webContents.send('update-checkbox', 'minicap', false);
+			this.isRunning = false;
+		}
 	}
 
 	close(code, signal){

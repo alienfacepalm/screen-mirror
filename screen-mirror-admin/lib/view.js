@@ -1,6 +1,5 @@
 const {ipcRenderer} = require('electron');
 
-
 $('#minicap').click((event) => {
 	ipcRenderer.send('minicap-click');
 });
