@@ -29,6 +29,7 @@ if [ "$1" = "autosize" ]; then
   size=$(adb shell dumpsys window | grep -Eo 'init=\d+x\d+' | head -1 | cut -d= -f 2)
   if [ "$size" = "" ]; then
 
+    #NEW SIZE DETECTION
     realWidth=$(adb shell wm size | tr -d '[:space:]' | cut -d":" -f2 | cut -d"x" -f1)	
     realHeight=$(adb shell wm size | tr -d '[:space:]' | cut -d":" -f2 | cut -d"x" -f2)
     virtualWidth=$((realWidth/2))
@@ -36,6 +37,7 @@ if [ "$1" = "autosize" ]; then
     realSize="${realWidth}x${realHeight}"	
     virtualSize="${virtualWidth}x${virtualHeight}"
 
+    #ORIGINAL CODE
     #w=$(adb shell dumpsys window | grep -Eo 'DisplayWidth=\d+' | head -1 | cut -d= -f 2)
     #h=$(adb shell dumpsys window | grep -Eo 'DisplayHeight=\d+' | head -1 | cut -d= -f 2)
     #size="${w}x${h}"
