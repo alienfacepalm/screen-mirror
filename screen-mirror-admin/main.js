@@ -1,10 +1,10 @@
-const {app, BrowserWindow, dialog} = require('electron');
+const {app, remote, BrowserWindow, dialog, ipcMain} = require('electron');
 const path = require('path');
 const url = require('url');
 
-const minicap = require('./lib/minicap');
-const minitouch = require('./lib/minitouch');
-const middleware = require('./lib/middleware');
+const Minicap = require('./lib/minicap');
+//const minitouch = require('./lib/minitouch');
+//const middleware = require('./lib/middleware');
 const DevTools = require('./lib/devtools');
 
 let win;
@@ -13,7 +13,9 @@ const createWindow = () => {
   win = new BrowserWindow({width: 900, height: 700});
 
   if(process.platform === 'win32'){
-    dialog.showMessageBox({message: `You are on Windows.\r\nMinicap and minitouch currently are only supported in *nix platforms.\r\nDo not expect this to function correctly.`});
+    dialog.showMessageBox({
+      message: `You are on Windows.\r\nMinicap and minitouch currently are only supported in *nix platforms.\r\nDo not expect this to function correctly.`
+    });
   }
 
   let devTools = new DevTools;
@@ -28,6 +30,17 @@ const createWindow = () => {
   win.on('closed', () => {
     win = null;
   });
+
+  /************************/
+
+  let mc = new Minicap(win);
+
+  //Events
+  ipcMain.on('minicap-click', () => {
+    let cmd = mc.isRunning ? 'stop' : 'start';
+    mc[cmd]();
+  });
+
 };
 
 app.on('ready', createWindow);

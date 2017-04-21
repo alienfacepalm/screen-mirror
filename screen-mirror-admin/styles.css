@@ -37,6 +37,12 @@ header img {
 	float: right;
 }
 
+#clear {
+	position: absolute;
+	top: 175px;
+	right: 20px;
+}
+
 fieldset {
 	position: absolute;
 	top: 20px;

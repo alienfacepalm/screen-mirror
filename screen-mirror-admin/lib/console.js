@@ -1,7 +1,8 @@
 
 class console {
-	
-	constructor(){
+
+	static update(message){
+		
 	}
 
 }
