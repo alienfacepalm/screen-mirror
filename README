@@ -1,0 +1,10 @@
+The setup.sh script will fetch your vendor deps and fix the run.sh in
+minicap. 
+
+You still need to run ndk-build in each minicap and minitouch root
+directories. You must have NDK and ndk-build in  your $PATH env var. 
+Then enter minicap and minitouch directories and simply run `ndk-build`. 
+
+Run
+
+./setup.sh

@@ -1,15 +1,7 @@
-When you clone minicap it will come with a run.sh file. 
+setup.sh has replaced your default run.sh for minicap, a copy is available
+here in run_minicap_fix.sh
 
-Replace that file with run_minicap.sh here. 
-
-The original file has some lines that detect resolution that no longer work.
-This new file fixes that problem. 
-
-HOW TO INSTALL new run.sh 
-
-cd vendor
-git clone https://github.com/openstf/minicap.git
-mv ./run_minicap_fix.sh ./mincap/run.sh
+Run
 
 ./minicap/run.sh autosize
 
