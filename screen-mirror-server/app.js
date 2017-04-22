@@ -7,8 +7,7 @@ const express = require('express');
 const path = require('path');
 const net = require('net');
 const isJSON = require('is-json');
-const exec = require('child_process').exec;
-const spawn = require('child_process').spawn;
+const {exec, spawn} = require('child_process');
 const ProtoBuf = require('protobufjs');
 
 const MINICAP_PORT = 1717;
@@ -26,10 +25,6 @@ let wss = new WebSocketServer({server: server});
 let screenStream;
 let touchStream;
 
-let ncSatisified = false;
-let adbSatisfied = false;
-let nc = spawn('nc', ['localhost', '1111']);
-let adb = spawn('adb', ['shell', 'wm', 'size']);
 let device = {
   device: {
     maxContacts: null,
@@ -41,8 +36,13 @@ let device = {
   }
 };
 
+let ncSatisified = false;
+let adbSatisfied = false;
+
+console.log(`======] Attempt to connect netcat to port ${MINITOUCH_PORT} to get resolution info [======`);
+let nc = spawn('nc', ['localhost', MINITOUCH_PORT]);
 nc.stdout.on('data', (data) => {
-  console.log(`======] Received Device Touch Info [======`);
+  console.log(`======] Received NC Device Touch Info [======`, data.toString());
 
   try{
     let info = data.toString().split(/\n/)[1].split(/\s/);
@@ -57,61 +57,76 @@ nc.stdout.on('data', (data) => {
     device.device.maxPressure = maxPressure;
 
     ncSatisified = true;
-    nc.kill('SIGHUP');
+    nc.kill('SIGKILL');
   }catch(error){
-    console.log(`!!!===] Error Fetching Touch Resolution [===!!!`);
-    nc.kill('SIGHUP');
+    console.log(`!!!===] Error NC Fetching Touch Info [===!!!`);
+    nc.kill('SIGTERM');
+    exec(`fuser ${MINITOUCH_PORT}/tcp`);
+    ncSatisified = false;
   }
 });
 
 nc.stderr.on('data', (data) => {
-  console.log(`!!!===] Error Fetching Touch Resolution [===!!!`);
+  console.log(`!!!===] Error NC Fetching Touch Info [===!!!`, data.toString());
   ncSatisfied = false;
-  nc.kill('SIGHUP');
+  nc.kill('SIGKILL');
+  exec(`fuser ${MINITOUCH_PORT}/tcp`);
 });
 
 nc.on('close', (code, signal) => {
-    console.log(`======] Netcat closed: ${signal} [======`);
+    //console.log(`======] NC closed: ${code} - ${signal} [======`);
+    exec(`fuser ${MINITOUCH_PORT}/tcp`);
 });
 
+setTimeout(() => {
+  nc.kill('SIGINT');
+  exec(`fuser ${MINITOUCH_PORT}/tcp`);
+}, 5000);
+
+
+let adb = spawn('adb', ['shell', 'wm', 'size']);
 adb.stdout.on('data', (data) => {
-  console.log(`======] Received Device Resolution Info [======`);
+  console.log(`======] Received ADB Device Info [======`);
   try{
     let info = data.toString().split(':')[1].trim();
     let width = info.split('x')[0];
+
     let height = info.split('x')[1];
     device.device.width = width;
     device.device.height = height;
 
     adbSatisfied = true;
   }catch(error){
-    console.error(`!!!===] Fatal Error Fetching Device Resolution [===!!!`);
+    console.error(`!!!===] Fatal Error Fetching ADB Device Info [===!!!`);
+    adbSatisfied = false;
   }
-
 });
 
 adb.stderr.on('data', (data) => {
-  console.error(`!!!===] Fatal Error Fetching Device Resolution [===!!!`);
+  console.error(`!!!===] Fatal Error Fetching ADB Device Info [===!!!`);
   adbSatisfied = false;
 });
 
+adb.on('close', (code, signal) => {
+    //console.log(`======] ADB closed successfully: ${code} - ${signal} [======`);
+});
+
+setTimeout(() => {
+  adb.kill('SIGINT');
+}, 5000);
+
 //TODO: find faster way
 const sendKeyEvents = (events) => {
-  console.log(`EVENTS: `, events);
   let inputs = events.map(key => `input keyevent ${key}`).join(' && ');
-  console.log(`INPUTS: `, inputs);
-  //input keyevent ${key}
+
   exec(`adb shell ${inputs}`, (error, stdout, stderr) => {
     if(error || stderr){
       return;
     }
-    console.log(stdout);
   });
 }
 
 const writeTouch = (cmd) => {
-  console.log(`======] WRITE TOUCH [======`);
-  console.log(cmd);
   if(touchStream.writable){
     touchStream.write(cmd);
   }else{
@@ -127,6 +142,7 @@ wss.on('connection', (ws) => {
 
   if(device){
     if(ncSatisified && adbSatisfied){
+      console.log(`======] Ready to view the UI [======`);
       ws.send(JSON.stringify(device));
     }else{
       console.log(`!!!====] Inadequate Device Info Acquired [===!!!`);
@@ -135,7 +151,7 @@ wss.on('connection', (ws) => {
 
   //====== MINICAP ======
   screenStream = net.connect(MINICAP_PORT, () => {
-    console.log(`======] Minicap Connected [======`);
+    console.log(`======] Minicap connected [======`);
   });
 
   const tryRead = () => {
@@ -260,12 +276,13 @@ wss.on('connection', (ws) => {
 
   touchStream.on('error', (error) => {
     console.error("!!!===] Be sure to run `adb forward tcp:1111 localabstract:minitouch` [===!!!", error);
+    process.exit(1);
   });
 
   touchStream.on('readable', (data) => {});
 
   touchStream.on('data', (data) => {
-    console.log(`======] TOUCH DATA [======`, data.toString());
+    console.log(data.toString());
   });
 
   touchStream.on('end', () => {
@@ -274,12 +291,10 @@ wss.on('connection', (ws) => {
 
   //====== CLIENT ======
   ws.on('data', (data) => {
-    console.log(data);
+    //console.log(data);
   });
 
   ws.on('message', (message) => {
-    console.log(message);
-    //accept JSON payload
     if(isJSON(message)){
       let m = JSON.parse(message);
 

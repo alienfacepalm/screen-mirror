@@ -106,7 +106,7 @@ fieldset input[type=checkbox]:checked + label:before {
 	background: black;
 	color: #00ff00;
 	overflow-y: scroll;
-	overflow-x: hidden;
+	overflow-x: auto;
 	text-align: left;
 	border: 1px solid black;
 }

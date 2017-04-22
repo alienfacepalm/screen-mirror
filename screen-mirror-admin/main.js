@@ -3,14 +3,14 @@ const path = require('path');
 const url = require('url');
 
 const Minicap = require('./lib/minicap');
-//const minitouch = require('./lib/minitouch');
-//const middleware = require('./lib/middleware');
+const Minitouch = require('./lib/minitouch');
+const Middleware = require('./lib/middleware');
 const DevTools = require('./lib/devtools');
 
 let win;
 
 const createWindow = () => {
-  win = new BrowserWindow({width: 900, height: 700});
+  win = new BrowserWindow({width: 1024, height: 576});
 
   if(process.platform === 'win32'){
     dialog.showMessageBox({
@@ -31,15 +31,15 @@ const createWindow = () => {
     win = null;
   });
 
-  /************************/
 
   let mc = new Minicap(win);
+  mc.initialize();
 
-  //Events
-  ipcMain.on('minicap-click', () => {
-    let cmd = mc.isRunning ? 'stop' : 'start';
-    mc[cmd]();
-  });
+  let mt = new Minitouch(win);
+  mt.initialize();
+
+  let mw = new Middleware(win);
+  mw.initialize();
 
 };
 
