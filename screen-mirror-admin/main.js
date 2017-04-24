@@ -6,6 +6,7 @@ const Minicap = require('./lib/minicap');
 const Minitouch = require('./lib/minitouch');
 const Middleware = require('./lib/middleware');
 const DevTools = require('./lib/devtools');
+const Device = require('./lib/device');
 
 let win;
 
@@ -30,7 +31,6 @@ const createWindow = () => {
   win.on('closed', () => {
     win = null;
   });
-
 
   let mc = new Minicap(win);
   mc.initialize();

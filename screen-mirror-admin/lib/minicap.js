@@ -1,6 +1,8 @@
-const {ipcMain} = require('electron');
+const {ipcMain, dialog} = require('electron');
 const {exec, spawn} = require('child_process');
 const path = require('path');
+
+const Device = require('./device');
 
 class Minicap {
 
@@ -9,6 +11,7 @@ class Minicap {
 		this.win = win;
 		this.thread = null;
 		this.isRunning = false;
+		this.device = new Device;
 	}
 
 	initialize(){
@@ -23,25 +26,33 @@ class Minicap {
 	start() {
 		console.log(`======] START MINICAP [=======`);
 
-		if(!this.isRunning){
+		this.device.list()
+			.then(devices => {
+				if(devices && devices.length){
+					if(!this.isRunning){
 
-			//TODO: address running this as exe from root
-			let wd = path.resolve(process.cwd(), './vendor/minicap');
-			this.thread = spawn(`./run.sh`, ['autosize'], {cwd: wd});
-			this.win.webContents.send('update-console', `Minicap is running: ${this.thread.pid}.\n`);
+						//TODO: address running this as exe from root
+						let wd = path.resolve(process.cwd(), './vendor/minicap');
+						this.thread = spawn(`./run.sh`, ['autosize'], {cwd: wd});
+						this.win.webContents.send('update-console', `Minicap is running: ${this.thread.pid}.\n`);
 
-			this.thread.stdout.on('data', data => {
-				console.log(`Minicap data`, data.toString());				
-				this.output(data);
-			});
-			this.thread.stderr.on('error', error => this.error(error));
-			this.thread.on('close', (code, signal) => this.close(code, signal));
+						this.thread.stdout.on('data', data => {
+							console.log(`Minicap data`, data.toString());				
+							this.output(data);
+						});
+						this.thread.stderr.on('error', error => this.error(error));
+						this.thread.on('close', (code, signal) => this.close(code, signal));
 
-			exec(`adb forward tcp:${this.PORT} localabstract:minicap`);
+						exec(`adb forward tcp:${this.PORT} localabstract:minicap`);
 
-			this.isRunning = true;
-
-		}
+						this.isRunning = true;
+					}
+				}else{
+					dialog.showMessageBox({message:`No devices plugged in!!`});
+				}
+			})
+			.catch(error => dialog.showMessageBox({message: error}));
+		
 	}
 
 	stop(){
