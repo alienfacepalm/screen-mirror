@@ -32,6 +32,9 @@ const createWindow = () => {
     win = null;
   });
 
+  let device = new Device;
+  device.fetch();
+
   let mc = new Minicap(win);
   mc.initialize();
 

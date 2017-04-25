@@ -4,6 +4,7 @@ const path = require('path');
 
 const Device = require('./device');
 
+//TODO: combine into single Service class
 class Minicap {
 
 	constructor(win){
@@ -26,32 +27,31 @@ class Minicap {
 	start() {
 		console.log(`======] START MINICAP [=======`);
 
-		this.device.list()
-			.then(devices => {
-				if(devices && devices.length){
-					if(!this.isRunning){
+		if(this.device.list().length){
 
-						//TODO: address running this as exe from root
-						let wd = path.resolve(process.cwd(), './vendor/minicap');
-						this.thread = spawn(`./run.sh`, ['autosize'], {cwd: wd});
-						this.win.webContents.send('update-console', `Minicap is running: ${this.thread.pid}.\n`);
+			if(!this.isRunning){
 
-						this.thread.stdout.on('data', data => {
-							console.log(`Minicap data`, data.toString());				
-							this.output(data);
-						});
-						this.thread.stderr.on('error', error => this.error(error));
-						this.thread.on('close', (code, signal) => this.close(code, signal));
+				//TODO: address running this as exe from root
+				let wd = path.resolve(process.cwd(), './vendor/minicap');
+				this.thread = spawn(`./run.sh`, ['autosize'], {cwd: wd});
+				this.win.webContents.send('update-console', `Minicap is running: ${this.thread.pid}.\n`);
 
-						exec(`adb forward tcp:${this.PORT} localabstract:minicap`);
+				this.thread.stdout.on('data', data => {
+					console.log(`Minicap data`, data.toString());				
+					this.output(data);
+				});
+				this.thread.stderr.on('error', error => this.error(error));
+				this.thread.on('close', (code, signal) => this.close(code, signal));
 
-						this.isRunning = true;
-					}
-				}else{
-					dialog.showMessageBox({message:`No devices plugged in!!`});
-				}
-			})
-			.catch(error => dialog.showMessageBox({message: error}));
+				exec(`adb forward tcp:${this.PORT} localabstract:minicap`);
+
+				this.isRunning = true;
+			}
+		}else{
+			this.win.webContents.send('update-checkbox', 'minicap', false);
+			console.log(`No devices plugged in`);
+			dialog.showMessageBox({message:`No devices plugged in!!`, buttons: ["OK"]});
+		}
 		
 	}
 

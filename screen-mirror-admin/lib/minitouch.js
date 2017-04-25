@@ -1,7 +1,11 @@
-const {ipcMain} = require('electron');
+const {ipcMain, dialog} = require('electron');
 const {exec, spawn} = require('child_process');
 const path = require('path');
 
+const Device = require('./device');
+
+
+//TODO: combine into single Service class
 class Minitouch {
 
 	constructor(win){
@@ -9,6 +13,7 @@ class Minitouch {
 		this.win = win;
 		this.thread = null;
 		this.isRunning = false;
+		this.device = new Device;
 	}
 
    	initialize(){
@@ -21,26 +26,34 @@ class Minitouch {
 	start() {
 		console.log(`======] START MINITOUCH [=======`);
 
-		if(!this.isRunning){
-			
-			//TODO: address running this as exe from root
-			let wd = path.resolve(process.cwd(), './vendor/minitouch');
-			this.thread = spawn(`./run.sh`, [], {cwd: wd});
-			this.win.webContents.send('update-console', `Minitouch is running: ${this.thread.pid}.\n`);
+		if(this.device.list().length){
 
-			this.thread.stdout.on('data', data => {
-				this.output(data);
-			});
-			this.thread.stderr.on('error', error => this.error(error));
-			this.thread.on('close', (code, signal) => this.close(code, signal));
+			if(!this.isRunning){
+				
+				//TODO: address running this as exe from root
+				let wd = path.resolve(process.cwd(), './vendor/minitouch');
+				this.thread = spawn(`./run.sh`, [], {cwd: wd});
+				this.win.webContents.send('update-console', `Minitouch is running: ${this.thread.pid}.\n`);
 
-			exec(`adb forward tcp:${this.PORT} localabstract:minicap`, (error, stdout, stderr) => {
-				console.log(error, stdout, stderr);
-			});
+				this.thread.stdout.on('data', data => {
+					this.output(data);
+				});
+				this.thread.stderr.on('error', error => this.error(error));
+				this.thread.on('close', (code, signal) => this.close(code, signal));
 
-			this.isRunning = true;
+				exec(`adb forward tcp:${this.PORT} localabstract:minicap`, (error, stdout, stderr) => {
+					console.log(error, stdout, stderr);
+				});
 
+				this.isRunning = true;
+
+			}
+		}else{
+			this.win.webContents.send('update-checkbox', 'minitouch', false);
+			console.log(`No devices plugged in`);
+			dialog.showMessageBox({message:`No devices plugged in!!`, buttons: ["OK"]});
 		}
+
 	}
 
 	stop(){
