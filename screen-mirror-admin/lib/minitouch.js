@@ -31,7 +31,7 @@ class Minitouch {
 			if(!this.isRunning){
 				
 				//TODO: address running this as exe from root
-				let wd = path.resolve(process.cwd(), './vendor/minitouch');
+				let wd = path.resolve(process.cwd(), '../vendor/minitouch');
 				this.thread = spawn(`./run.sh`, [], {cwd: wd});
 				this.win.webContents.send('update-console', `Minitouch is running: ${this.thread.pid}.\n`);
 
@@ -41,11 +41,7 @@ class Minitouch {
 				this.thread.stderr.on('error', error => this.error(error));
 				this.thread.on('close', (code, signal) => this.close(code, signal));
 
-				exec(`adb forward tcp:${this.PORT} localabstract:minicap`, (error, stdout, stderr) => {
-					console.log(error, stdout, stderr);
-				});
-
-				this.isRunning = true;
+				this.device.forward('minitouch');
 
 			}
 		}else{

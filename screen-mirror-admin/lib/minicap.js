@@ -11,6 +11,7 @@ class Minicap {
 		this.PORT = 1717;
 		this.win = win;
 		this.thread = null;
+		this.forward = null;
 		this.isRunning = false;
 		this.device = new Device;
 	}
@@ -32,7 +33,8 @@ class Minicap {
 			if(!this.isRunning){
 
 				//TODO: address running this as exe from root
-				let wd = path.resolve(process.cwd(), './vendor/minicap');
+				let wd = path.resolve(process.cwd(), '../vendor/minicap');
+				console.log(wd)
 				this.thread = spawn(`./run.sh`, ['autosize'], {cwd: wd});
 				this.win.webContents.send('update-console', `Minicap is running: ${this.thread.pid}.\n`);
 
@@ -43,9 +45,8 @@ class Minicap {
 				this.thread.stderr.on('error', error => this.error(error));
 				this.thread.on('close', (code, signal) => this.close(code, signal));
 
-				exec(`adb forward tcp:${this.PORT} localabstract:minicap`);
+				this.device.forward('minicap');
 
-				this.isRunning = true;
 			}
 		}else{
 			this.win.webContents.send('update-checkbox', 'minicap', false);

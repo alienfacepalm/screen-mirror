@@ -28,7 +28,8 @@ class Middleware {
 
 			if(!this.isRunning){
 
-				let wd = path.resolve(process.cwd(), './screen-mirror-server');
+				let wd = path.resolve(process.cwd(), '../screen-mirror-server');
+				console.log(wd);
 				this.thread = spawn(`node`, ['app.js'], {cwd: wd});
 				this.win.webContents.send('update-console', `Middleware is running: ${this.thread.pid}.\n`);
 

@@ -60,7 +60,7 @@ nc.stdout.on('data', (data) => {
     nc.kill('SIGKILL');
   }catch(error){
     console.log(`!!!===] Error NC Fetching Touch Info [===!!!`);
-    nc.kill('SIGTERM');
+    nc.kill('SIGKILL');
     exec(`fuser ${MINITOUCH_PORT}/tcp`);
     ncSatisified = false;
   }
@@ -79,7 +79,7 @@ nc.on('close', (code, signal) => {
 });
 
 setTimeout(() => {
-  nc.kill('SIGINT');
+  nc.kill('SIGKILL');
   exec(`fuser ${MINITOUCH_PORT}/tcp`);
 }, 5000);
 
@@ -112,7 +112,7 @@ adb.on('close', (code, signal) => {
 });
 
 setTimeout(() => {
-  adb.kill('SIGINT');
+  adb.kill('SIGKILL');
 }, 5000);
 
 //TODO: find faster way
