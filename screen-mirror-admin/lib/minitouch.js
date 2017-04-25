@@ -43,6 +43,8 @@ class Minitouch {
 
 				this.device.forward('minitouch');
 
+				this.isRunning = true;
+
 			}
 		}else{
 			this.win.webContents.send('update-checkbox', 'minitouch', false);

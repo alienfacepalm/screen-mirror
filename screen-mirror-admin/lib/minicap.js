@@ -47,6 +47,8 @@ class Minicap {
 
 				this.device.forward('minicap');
 
+				this.isRunning = true;
+
 			}
 		}else{
 			this.win.webContents.send('update-checkbox', 'minicap', false);
