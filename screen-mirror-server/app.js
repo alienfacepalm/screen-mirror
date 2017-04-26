@@ -288,7 +288,7 @@ wss.on('connection', (ws) => {
     //console.log(data);
   });
 
-  //Step 7: receive touch or key events from UI and send them to the device
+  //Step 8: receive touch or key events from UI and send them to the device
   ws.on('message', (message) => {
     if(isJSON(message)){
       let m = JSON.parse(message);
