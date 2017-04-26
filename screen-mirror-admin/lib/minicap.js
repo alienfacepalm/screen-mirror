@@ -13,7 +13,7 @@ class Minicap {
 		if(!instance){
 			instance = this;
 		}
-		this.PORT = 1717;
+		this.port = 1717;
 		this.win = win;
 		this.thread = null;
 		this.forward = null;
@@ -30,7 +30,6 @@ class Minicap {
 	    console.log(`Running Command ${cmd}()`);
 	    this[cmd]();
 	  });
-
 	}
 
 	start() {
@@ -41,8 +40,9 @@ class Minicap {
 			if(!this.isRunning){
 
 				//TODO: address running this as exe from root
+				//TODO: Do not use shell script to run
 				let wd = path.resolve(process.cwd(), '../vendor/minicap');
-				console.log(wd)
+				console.log(wd);
 				this.thread = spawn(`./run.sh`, ['autosize'], {cwd: wd});
 				this.win.webContents.send('update-console', `Minicap is running: ${this.thread.pid}.\n`);
 
@@ -78,7 +78,7 @@ class Minicap {
 			process.kill(this.pid, 'SIGKILL');
 			this.pid = null;
 			this.thread.kill('SIGKILL');
-			exec(`fuser ${this.PORT}/tcp`);
+			exec(`fuser ${this.port}/tcp`);
 
 			this.win.webContents.send('update-console', "Minicap terminated.\n");
 			this.win.webContents.send('update-checkbox', 'minicap', false);

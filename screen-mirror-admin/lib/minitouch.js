@@ -13,7 +13,7 @@ class Minitouch {
 		if(!instance){
 			instance = this;
 		}
-		this.PORT = 1111;
+		this.port = 1111;
 		this.win = win;
 		this.thread = null;
 		this.isRunning = false;
@@ -47,7 +47,9 @@ class Minitouch {
 			if(!this.isRunning){
 				
 				//TODO: address running this as exe from root
+				//TODO: do not use Shell script
 				let wd = path.resolve(process.cwd(), '../vendor/minitouch');
+				console.log(wd);
 				this.thread = spawn(`./run.sh`, [], {cwd: wd});
 				this.win.webContents.send('update-console', `Minitouch is running: ${this.thread.pid}.\n`);
 
@@ -84,7 +86,7 @@ class Minitouch {
 				process.kill(this.pid, 'SIGKILL');
 				this.pid = null;
 				this.thread.kill('SIGKILL');
-				exec(`fuser ${this.PORT}/tcp`);
+				exec(`fuser ${this.port}/tcp`);
 
 				this.win.webContents.send('update-console', "Minitouch terminated.\n");
 				this.win.webContents.send('update-checkbox', 'minitouch', false);
