@@ -242,7 +242,7 @@ class Screen extends Component {
 	mouseWheel(event){
 		console.log(`======] Mouse Wheel [=======`, event);
 		//let deltaY = event.deltaY;
-		//hhhhasdfasdfhasdfasdflet wheelDeltaY = event.wheelDeltaY;
+		//let wheelDeltaY = event.wheelDeltaY;
 	}
 
 	/*
