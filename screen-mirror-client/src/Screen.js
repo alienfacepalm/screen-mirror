@@ -132,6 +132,18 @@ class Screen extends Component {
 
 	}
 
+	updateImage(data){
+		if(this.ctx){
+			let blob = new Blob([data], {type: 'image/jpeg'});
+			let image = new Image();
+
+			image.onload = () => {
+				this.ctx.drawImage(image, 0, 0, this.canvas.width, this.canvas.height);
+			};
+			image.src = URL.createObjectURL(blob);
+		}
+	}
+
 	calculatePosition(event){
 		let x = Math.ceil(this.state.device.maxX/(this.canvas.width/event.offsetX));
 		let y = Math.ceil(this.state.device.maxY/(this.canvas.height/event.offsetY));

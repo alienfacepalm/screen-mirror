@@ -36,9 +36,7 @@ let device = {
   }
 };
 
-let ncSatisified = false;
-let adbSatisfied = false;
-
+//Step 1: connect to minitouch to get device info for building the DEVICE object to send to the UI
 console.log(`======] Attempt to connect netcat to port ${MINITOUCH_PORT} to get resolution info [======`);
 let nc = spawn('nc', ['localhost', MINITOUCH_PORT]);
 nc.stdout.on('data', (data) => {
@@ -56,19 +54,18 @@ nc.stdout.on('data', (data) => {
     device.device.maxY = maxY;
     device.device.maxPressure = maxPressure;
 
-    ncSatisified = true;
     nc.kill('SIGKILL');
   }catch(error){
     console.log(`!!!===] Error NC Fetching Touch Info [===!!!`);
     nc.kill('SIGKILL');
     exec(`fuser ${MINITOUCH_PORT}/tcp`);
-    ncSatisified = false;
+
   }
 });
 
 nc.stderr.on('data', (data) => {
   console.log(`!!!===] Error NC Fetching Touch Info [===!!!`, data.toString());
-  ncSatisfied = false;
+
   nc.kill('SIGKILL');
   exec(`fuser ${MINITOUCH_PORT}/tcp`);
 });
@@ -84,6 +81,7 @@ setTimeout(() => {
 }, 5000);
 
 
+//Step 2: get the device resolution 
 let adb = spawn('adb', ['shell', 'wm', 'size']);
 adb.stdout.on('data', (data) => {
   console.log(`======] Received ADB Device Info [======`);
@@ -95,16 +93,13 @@ adb.stdout.on('data', (data) => {
     device.device.width = width;
     device.device.height = height;
 
-    adbSatisfied = true;
   }catch(error){
     console.error(`!!!===] Fatal Error Fetching ADB Device Info [===!!!`);
-    adbSatisfied = false;
   }
 });
 
 adb.stderr.on('data', (data) => {
   console.error(`!!!===] Fatal Error Fetching ADB Device Info [===!!!`);
-  adbSatisfied = false;
 });
 
 adb.on('close', (code, signal) => {
@@ -135,28 +130,22 @@ const writeTouch = (cmd) => {
   } 
 }
 
-//Create WebSocket for client to connect to
+//Step 3: Create WebSocket for client to connect to
 wss.on('connection', (ws) => {
 
   console.info(`======] WebSocket client connected [======`, device);
 
   if(device){
     ws.send(JSON.stringify(device));
-    /*
-    if(ncSatisified && adbSatisfied){
-      console.log(`======] Ready to view the UI [======`);
-      ws.send(JSON.stringify(device));
-    }else{
-      console.log(`!!!====] Inadequate Device Info Acquired [===!!!`);
-    }
-    */
   }
 
+  //Step 4: create TCP connection to minicap
   //====== MINICAP ======
   screenStream = net.connect(MINICAP_PORT, () => {
     console.log(`======] Minicap connected [======`);
   });
 
+  //Step 7: generate frameBody to send to UI
   const tryRead = () => {
 
     for (let chunk; (chunk = screenStream.read());) {
@@ -266,12 +255,14 @@ wss.on('connection', (ws) => {
     process.exit(1);
   });
 
+  //Step 6: receive minicap jpg frameBuffer from the device
   screenStream.on('readable', tryRead);
 
   screenStream.on('end', () => {
     console.log(`======] Minicap disconnected [======`);
   });
 
+  //Step 5: create TCP connection to minitouch
   //====== MINITOUCH ======
   touchStream = net.connect(MINITOUCH_PORT, () => {
     console.log(`======] Minitouch connected [======`);
@@ -297,6 +288,7 @@ wss.on('connection', (ws) => {
     //console.log(data);
   });
 
+  //Step 7: receive touch or key events from UI and send them to the device
   ws.on('message', (message) => {
     if(isJSON(message)){
       let m = JSON.parse(message);
