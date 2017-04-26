@@ -39,10 +39,12 @@ class Minicap {
 
 			if(!this.isRunning){
 
+				//TODO: convert to Promises
 				//TODO: address running this as exe from root
 				//TODO: Do not use shell script to run
 				let wd = path.resolve(process.cwd(), '../vendor/minicap');
 				console.log(wd);
+
 				this.thread = spawn(`./run.sh`, ['autosize'], {cwd: wd});
 				this.win.webContents.send('update-console', `Minicap is running: ${this.thread.pid}.\n`);
 

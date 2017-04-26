@@ -42,24 +42,66 @@ class Minitouch {
 	start() {
 		console.log(`======] START MINITOUCH [=======`);
 
+		/*
+		#!/usr/bin/env bash
+
+		# Fail on error, verbose output
+		set -exo pipefail
+
+		# Build project
+		ndk-build 1>&2
+
+		# Figure out which ABI and SDK the device has
+		abi=$(adb shell getprop ro.product.cpu.abi | tr -d '\r')
+		sdk=$(adb shell getprop ro.build.version.sdk | tr -d '\r')
+
+		# PIE is only supported since SDK 16
+		if (($sdk >= 16)); then
+		  bin=minitouch
+		else
+		  bin=minitouch-nopie
+		fi
+
+		# Upload the binary
+		adb push libs/$abi/$bin /data/local/tmp/
+
+		# Run!
+		adb shell /data/local/tmp/$bin "$@"
+		*/
+
 		if(this.device.list().length){
 
 			if(!this.isRunning){
 				
+				//TODO: convert to Promises
 				//TODO: address running this as exe from root
 				//TODO: do not use Shell script
 				let wd = path.resolve(process.cwd(), '../vendor/minitouch');
 				console.log(wd);
-				this.thread = spawn(`./run.sh`, [], {cwd: wd});
-				this.win.webContents.send('update-console', `Minitouch is running: ${this.thread.pid}.\n`);
+				//this.thread = spawn(`./run.sh`, [], {cwd: wd});
+				//adb shell getprop ro.product.cpu.abi
+				let abi = spawn('adb', ['shell', 'getprop', 'ro.product.cpu.abi']);
+				abi.stdout.on('data', data => {
+					let arch = data.toString();
 
-				this.thread.stdout.on('data', data => {
+					//adb push libs/$abi/$bin /data/local/tmp/
+					//let push = spawn('adb', ['push', `${wd}/libs/${arch}/minitouch`, '/data/local/tmp'], {cwd: wd});
+					//push.stdout.on('data', data => console.log(`PUSH`, data.toString()));
+					//push.stderr.on('data', data => console.error(data.toString()));
+					this.thread = spawn('adb', ['shell', '/data/local/tmp/minitouch']);
+					this.win.webContents.send('update-console', `Minitouch is running: ${this.thread.pid}.\n`);
+
+					this.thread.stdout.on('data', data => {
 					console.log(`Minitouch output`);
 					this.pid = data.toString();
 					this.output(data);
 				});
 				this.thread.stderr.on('error', error => this.error(error));
 				this.thread.on('close', (code, signal) => this.close(code, signal));
+				});
+				
+
+			
 
 				this.device.forward('minitouch');
 

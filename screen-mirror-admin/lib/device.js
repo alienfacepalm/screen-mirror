@@ -4,11 +4,12 @@ let instance;
 
 class Device {
 
-	constructor(){
+	constructor(win){
 		if(!instance){
 			instance = this;
 		}
 
+		this.win = win;
 		this.client = adb.createClient();
 		this.devices = [];
 		this.ports = {minicap: 1717, minitouch: 1111};
@@ -29,13 +30,15 @@ class Device {
 
 	//TODO: support multiple devices
 	forward(service){
-		console.log(`Forward ${service}`);
 		let port = this.ports[service];
 		this.client.listDevices()
 			.then(devices => {
 				devices.forEach(device => {
 					this.client.forward(device.id, `tcp:${port}`, `localabstract:${service}`)
-						.then(() => console.log(`Forwarded ${service} to ${port}`));
+						.then(() => {
+							console.log(`Forwarded ${service} to ${port}`);
+							this.win.webContents.send('update-console', `Forwarded ${service} to ${port}\n`);
+						});
 				})
 			});
 

@@ -11,7 +11,7 @@ const Device = require('./lib/device');
 let win;
 
 const createWindow = () => {
-  win = new BrowserWindow({width: 1024, height: 576});
+  win = new BrowserWindow({width: 1024, height: 600});
 
   if(process.platform === 'win32'){
     dialog.showMessageBox({
@@ -32,7 +32,7 @@ const createWindow = () => {
     win = null;
   });
 
-  let device = new Device;
+  let device = new Device(win);
   device.fetch();
 
   let mc = new Minicap(win);
