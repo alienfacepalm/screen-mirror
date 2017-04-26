@@ -4,16 +4,32 @@ const path = require('path');
 
 const Device = require('./device');
 
+let instance;
 
 //TODO: combine into single Service class
 class Minitouch {
 
 	constructor(win){
+		if(!instance){
+			instance = this;
+		}
 		this.PORT = 1111;
 		this.win = win;
 		this.thread = null;
 		this.isRunning = false;
 		this.device = new Device;
+		this._pid = null;
+
+		return instance;
+	}
+
+	//PID must be set from the Middleware output when Node connects to the TCP port
+	set pid(pid){
+		this._pid = pid;
+	}
+
+	get pid(){
+		return this._pid;
 	}
 
    	initialize(){
@@ -36,6 +52,8 @@ class Minitouch {
 				this.win.webContents.send('update-console', `Minitouch is running: ${this.thread.pid}.\n`);
 
 				this.thread.stdout.on('data', data => {
+					console.log(`Minitouch output`);
+					this.pid = data.toString();
 					this.output(data);
 				});
 				this.thread.stderr.on('error', error => this.error(error));
@@ -57,15 +75,23 @@ class Minitouch {
 	stop(){
 		console.log(`======] STOP MINITOUCH [======`);
 
-		this.thread.kill('SIGKILL');
-		try{
-			process.kill(this.thread.pid, 'SIGKILL');
-		}catch(error){}
-		exec(`fuser ${this.PORT}/tcp`);
+		if(!this.pid){
+			dialog.showMessageBox({message:`You must start Middleware in order to stop Minitouch`, buttons: ["OK"]});
+		}else{
+			try{
+				console.log(`Kill ${this.pid}`);
+				this.win.webContents.send('update-console', `Kill ${this.pid}.\n`);
+				process.kill(this.pid, 'SIGKILL');
+				this.pid = null;
+				this.thread.kill('SIGKILL');
+				exec(`fuser ${this.PORT}/tcp`);
 
-		this.win.webContents.send('update-console', "Minitouch terminated.\n");
-		this.win.webContents.send('update-checkbox', 'minitouch', false);
-		this.isRunning = false;
+				this.win.webContents.send('update-console', "Minitouch terminated.\n");
+				this.win.webContents.send('update-checkbox', 'minitouch', false);
+				this.isRunning = false;
+			}catch(error){}
+		}
+
 	}
 
 

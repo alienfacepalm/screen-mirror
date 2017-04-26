@@ -4,16 +4,24 @@ const path = require('path');
 
 const Device = require('./device');
 
+let instance;
+
 //TODO: combine into single Service class
 class Minicap {
 
 	constructor(win){
+		if(!instance){
+			instance = this;
+		}
 		this.PORT = 1717;
 		this.win = win;
 		this.thread = null;
 		this.forward = null;
 		this.isRunning = false;
 		this.device = new Device;
+		this.pid = null;
+
+		return instance;
 	}
 
 	initialize(){
@@ -39,7 +47,9 @@ class Minicap {
 				this.win.webContents.send('update-console', `Minicap is running: ${this.thread.pid}.\n`);
 
 				this.thread.stdout.on('data', data => {
-					console.log(`Minicap data`, data.toString());				
+					console.log(`Minicap output`);
+					console.log(data.toString());	
+					this.pid = data.toString().split('\n')[0];
 					this.output(data);
 				});
 				this.thread.stderr.on('error', error => this.error(error));
@@ -61,15 +71,21 @@ class Minicap {
 	stop(){
 		console.log(`======] STOP MINICAP [======`);
 
-		this.thread.kill('SIGKILL');
+		
 		try{
-			process.kill(this.thread.pid, 'SIGKILL');
-		}catch(error){}
-		exec(`fuser ${this.PORT}/tcp`);
+			console.log(`Kill ${this.pid}`);
+			this.win.webContents.send('update-console', `Kill ${this.pid}.\n`);
+			process.kill(this.pid, 'SIGKILL');
+			this.pid = null;
+			this.thread.kill('SIGKILL');
+			exec(`fuser ${this.PORT}/tcp`);
 
-		this.win.webContents.send('update-console', "Minicap terminated.\n");
-		this.win.webContents.send('update-checkbox', 'minicap', false);
-		this.isRunning = false;
+			this.win.webContents.send('update-console', "Minicap terminated.\n");
+			this.win.webContents.send('update-checkbox', 'minicap', false);
+			this.isRunning = false;
+		}catch(error){}
+
+		
 	}
 
 

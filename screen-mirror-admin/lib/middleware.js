@@ -3,15 +3,23 @@ const {exec, spawn} = require('child_process');
 const path = require('path');
 
 const Device = require('./device');
+const Minitouch = require('./minitouch');
+
+let instance;
 
 //TODO: combine into single Service class
 class Middleware {
 
 	constructor(win){
+		if(!instance){
+			instance = this;
+		}
 		this.win = win;
 		this.thread = null;
 		this.isRunning = false;
 		this.device = new Device;
+
+		return instance;
 	}
 
    	initialize(){
@@ -33,7 +41,13 @@ class Middleware {
 				this.thread = spawn(`node`, ['app.js'], {cwd: wd});
 				this.win.webContents.send('update-console', `Middleware is running: ${this.thread.pid}.\n`);
 
-				this.thread.stdout.on('data', data => this.output(data));
+				this.thread.stdout.on('data', data => {
+					try{
+						//Set PID on Minitouch so it can be killed
+						Minitouch.pid = data.toString().split(/\n/)[2].split(/\s/)[1];
+					}catch(error){}
+					this.output(data);
+				});
 				this.thread.stderr.on('error', error => this.error(error));
 				this.thread.on('close', (code, signal) => this.close(code, signal));
 

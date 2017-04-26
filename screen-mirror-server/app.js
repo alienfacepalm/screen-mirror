@@ -141,12 +141,15 @@ wss.on('connection', (ws) => {
   console.info(`======] WebSocket client connected [======`, device);
 
   if(device){
+    ws.send(JSON.stringify(device));
+    /*
     if(ncSatisified && adbSatisfied){
       console.log(`======] Ready to view the UI [======`);
       ws.send(JSON.stringify(device));
     }else{
       console.log(`!!!====] Inadequate Device Info Acquired [===!!!`);
     }
+    */
   }
 
   //====== MINICAP ======
