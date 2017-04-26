@@ -12,6 +12,7 @@ import * as keycodes from './lib/input/keycodes';
 
 class Screen extends Component {
 
+	//Step 1: open websocket
 	constructor(props){
 		super(props);
 
@@ -47,6 +48,8 @@ class Screen extends Component {
 		};
 	}
 
+
+	//STEP 3: initialize the canvas using the device data sent from server, add events
 	initializeCanvas(){
 		console.log(`======] Init Canvas [======`, this.state);
 
@@ -72,6 +75,7 @@ class Screen extends Component {
 		}
 	}
 
+	//STEP 2: listen on websocket for needed device data, then issues STEP 3 to init canvas 
 	componentDidMount() {
 		console.log(`Screen component mounted`);
 
@@ -102,11 +106,12 @@ class Screen extends Component {
 				}
 				this.initializeCanvas();
 			}else{
-				//jpeg blob
+				//Step 4: Websocket receives blob data from minicap
 				this.updateImage(payload.data);
 			}
 		}
 
+		/*
 		//Protobuf
 		ProtoBuf.load('../screenmirror.proto', (error, root) => {
 
@@ -123,6 +128,7 @@ class Screen extends Component {
 			this.touchReset = root.lookupType('ScreenMirror.TouchReset');
 
 		});
+		*/
 
 	}
 
@@ -135,6 +141,7 @@ class Screen extends Component {
 
 	//TODO: normalize for all commands: down, move, up, commit, reset
 	//ProtoBuf commands
+	/*
 	sendTouchDown(payload){
 		let message = this.touchDown.create({
 			seq: 'd',
@@ -148,8 +155,10 @@ class Screen extends Component {
 
 		this.websocket.send(buffer);
 	}
+	*/
 
-	//Standard commands
+	//Step 7: command sent to server
+	//Send minitouch commands to server
 	sendCommands(){
 		console.log(`======] Commands [======`, this.commands);
 
@@ -158,8 +167,11 @@ class Screen extends Component {
 		this.commands = [];
 	}
 
-	//TODO: gestures, mousewheel
 
+
+	//Step 6: User clicks something on canvas
+	//Breakout to lib
+	//Mouse events, click and swipe
 	interactStart(event){
 		this.canvas.style.cursor = 'move';
 		this.setState({swiping: true});
@@ -221,15 +233,20 @@ class Screen extends Component {
 		//hhhhasdfasdfhasdfasdflet wheelDeltaY = event.wheelDeltaY;
 	}
 
+	/*
 	reset(){
 		console.log(`======] Attemping Minitouch Reset [======`);
 		this.commands.push(`r`);
 		this.commands.push(`c`);
 		this.sendCommands();
 	}
+	*/
 
-	//nav keyevents
 
+
+
+	//Breakout to lib
+	//Key events
 	keyDown(event){
 		console.log(`======] Key Down [======`, event);
 		event.preventDefault();
@@ -264,6 +281,8 @@ class Screen extends Component {
 		}
 	}
 
+	//Add to key events lib
+	//CANNED KEYEVENTS
 	menu(){
 		console.log(`======] Menu Command [======`);
 
@@ -285,17 +304,6 @@ class Screen extends Component {
 		this.websocket.send(JSON.stringify(message));
 	}
 
-	updateImage(data){
-		if(this.ctx){
-			let blob = new Blob([data], {type: 'image/jpeg'});
-			let image = new Image();
-
-			image.onload = () => {
-				this.ctx.drawImage(image, 0, 0, this.canvas.width, this.canvas.height);
-			};
-			image.src = URL.createObjectURL(blob);
-		}
-	}
 
 	render(){
 		return (
