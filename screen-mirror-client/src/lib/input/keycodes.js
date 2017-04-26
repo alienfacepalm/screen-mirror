@@ -42,7 +42,9 @@ export const map = {
 	87 : 51, //w
 	88 : 52, //x
 	89 : 53, //y
-	90 : 54 //z
+	90 : 54, //z
+  188: 55, //comma
+  190: 56 //period
 };
 
 export const android = {
