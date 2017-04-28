@@ -5,7 +5,7 @@ import React, {Component} from 'react';
 
 import isJSON from 'is-json';
 import {Icon} from 'react-fa';
-import ProtoBuf from 'protobufjs';
+//import ProtoBuf from 'protobufjs';
 
 import environment from '../environment';
 import * as keycodes from './lib/input/keycodes';
@@ -91,15 +91,15 @@ class Screen extends Component {
 			
 			if(isJSON(payload.data)){
 				let data = JSON.parse(payload.data);
-				console.log(data);
-				if(data.device){
+				
+				if(data){
 						this.setState({device: {
-										width: data.device.width,
-						                height: data.device.height,
-						                maxX: data.device.maxX,
-						                maxY: data.device.maxY,
-						                maxContacts: data.device.maxContacts,
-						                maxPressure: data.device.maxPressure
+										width: data.width,
+						                height: data.height,
+						                maxX: data.maxX,
+						                maxY: data.maxY,
+						                maxContacts: data.maxContacts,
+						                maxPressure: data.maxPressure
 						               }
 						             });	
 					this.pressure = Number(this.state.device.maxPressure)=== 0 ? 0 : 50;
@@ -244,18 +244,6 @@ class Screen extends Component {
 		//let deltaY = event.deltaY;
 		//let wheelDeltaY = event.wheelDeltaY;
 	}
-
-	/*
-	reset(){
-		console.log(`======] Attemping Minitouch Reset [======`);
-		this.commands.push(`r`);
-		this.commands.push(`c`);
-		this.sendCommands();
-	}
-	*/
-
-
-
 
 	//Breakout to lib
 	//Key events
