@@ -5,7 +5,7 @@ import React, {Component} from 'react';
 
 import isJSON from 'is-json';
 import {Icon} from 'react-fa';
-//import ProtoBuf from 'protobufjs';
+import Serializer from './lib/serializer';
 
 import environment from '../environment';
 import * as keycodes from './lib/input/keycodes';
@@ -20,6 +20,7 @@ class Screen extends Component {
 		this.canvas = null;
 		this.endpoint = `${environment.middleware.protocol}://${environment.middleware.endpoint}:${environment.middleware.port}`;
 		this.websocket = new WebSocket(this.endpoint);
+		this.serializer = new Serializer('json');
 
 		this.commands = [];
 
@@ -89,22 +90,29 @@ class Screen extends Component {
 		this.websocket.onmessage = (payload) => {
 			//When ported to MCB this change as well as the socket server
 			
+
 			if(isJSON(payload.data)){
-				let data = JSON.parse(payload.data);
+
+				this.serializer.from(payload.data)
+					.then(data => {
+						if(data){
+								this.setState({device: {
+												width: data.width,
+								                height: data.height,
+								                maxX: data.maxX,
+								                maxY: data.maxY,
+								                maxContacts: data.maxContacts,
+								                maxPressure: data.maxPressure
+								               }
+								             });	
+							this.pressure = Number(this.state.device.maxPressure)=== 0 ? 0 : 50;
+						}
+						this.initializeCanvas();
+					})
+					.catch(error => {
+						console.error(error)
+					});
 				
-				if(data){
-						this.setState({device: {
-										width: data.width,
-						                height: data.height,
-						                maxX: data.maxX,
-						                maxY: data.maxY,
-						                maxContacts: data.maxContacts,
-						                maxPressure: data.maxPressure
-						               }
-						             });	
-					this.pressure = Number(this.state.device.maxPressure)=== 0 ? 0 : 50;
-				}
-				this.initializeCanvas();
 			}else{
 				//Step 4: Websocket receives blob data from minicap
 				this.updateImage(payload.data);
@@ -174,9 +182,13 @@ class Screen extends Component {
 	sendCommands(){
 		console.log(`======] Commands [======`, this.commands);
 
-		let message = JSON.stringify({type: 'MINITOUCH', commands: this.commands});
-		this.websocket.send(message);
-		this.commands = [];
+		this.serializer.to({type: 'MINITOUCH', commands: this.commands})
+			.then(message => {
+				this.websocket.send(message);
+				this.commands = [];
+			})
+			.catch(error => console.error(error));
+
 	}
 
 
