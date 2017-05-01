@@ -43,7 +43,6 @@ class Server {
 			.catch(error => console.error(`ERROR`, error));
 	}
 
-	//Use serialize class
 	onMessage(message){
 
 		if(isJSON(message)){

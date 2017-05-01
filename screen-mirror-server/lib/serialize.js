@@ -1,19 +1,21 @@
+const ProtoBuf = require('protobufjs');
+
 class Serialize {
 
-	static toProtobuf(input){
+	static toProtobuf(payload){
 
 	}
 
-	static fromProtobuf(input){
+	static fromProtobuf(payload){
 
 	}
 
-	static toJson(input){
-		return JSON.stringify(input);
+	static toJson(payload){
+		return JSON.stringify(payload);
 	}
 
-	static fromJson(input){
-		return JSON.parse(input);
+	static fromJson(payload){
+		return JSON.parse(payload);
 	}
 	
 }
