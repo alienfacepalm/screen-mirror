@@ -1,4 +1,7 @@
 const net = require('net');
+const isJSON = require('is-json');
+
+const Serialize = require('./serialize');
 
 class Minitouch {
 
@@ -23,11 +26,9 @@ class Minitouch {
 		});
 	}
 
-	write(payload){
-		console.log(`writable`, this.touchStream.writable)
+	write(commands){
 		if(this.touchStream.writable){
-			console.log(`Write`, payload)
-			this.touchStream.write(payload);
+			this.touchStream.write(commands);
 		}else{
 			console.error(`TouchStream not Writable`);
 		}

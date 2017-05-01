@@ -76,9 +76,8 @@ class Server {
 		});
 	}
 
-	writeTouch(cmd){
-		let payload = Serialize.toJson(cmd);
- 		this.minitouch.write(payload);
+	writeTouch(commands){
+ 		this.minitouch.write(commands);
 	}
 
 	connect(){
