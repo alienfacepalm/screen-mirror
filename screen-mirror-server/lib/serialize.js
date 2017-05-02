@@ -11,11 +11,11 @@ class Serialize {
 	}
 
 	static toJson(payload){
-		return JSON.stringify(payload);
+		return Promise.resolve(JSON.stringify(payload));
 	}
 
 	static fromJson(payload){
-		return JSON.parse(payload);
+		return Promise.resolve(JSON.parse(payload));
 	}
 	
 }

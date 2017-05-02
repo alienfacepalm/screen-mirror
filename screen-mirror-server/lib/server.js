@@ -4,8 +4,8 @@ const {spawn, exec} = require('child_process');
 const express = require('express');
 const net = require('net');
 const isJSON = require('is-json');
-
 const adbkit = require('adbkit');
+
 const Minicap = require('./minicap');
 const Minitouch = require('./minitouch');
 const Serialize = require('./serialize');
@@ -21,8 +21,6 @@ class Server {
 
 		this.minicap = new Minicap(this.minicap_port);
 		this.minitouch = new Minitouch(this.minitouch_port);
-
-		this.deviceInfo = {};
 	}
 
 	initialize(){
@@ -34,11 +32,11 @@ class Server {
 		console.log(`Getting All Device Info`);
 		this.getDeviceInfo()
 			.then(this.getMinitouchInfo.bind(this))
-			.then(this.getDeviceResolution.bind(this))
-			.then(info => {
-				console.log(`Device Info Retrieved.`, info);
+			.then(data => this.getDeviceResolution(data))
+			.then(data => {
+				console.log(`Device Info Retrieved.`, data);
 				console.log(`Connecting WebSocket`);
-				this.connect();
+				this.connect(data);
 			})
 			.catch(error => console.error(`ERROR`, error));
 	}
@@ -47,17 +45,18 @@ class Server {
 
 		if(isJSON(message)){
 
-	      let m = Serialize.fromJson(message);
-
-	      switch(m.type){
-	        case 'MINITOUCH':
-	          let commands = m.commands.join('\r\n');
-	          this.writeTouch(commands+'\r\n');
-	          break;
-	        case 'KEYEVENT':
-	          this.sendKeyEvents(m.commands);
-	          break;
-	      }
+	      Serialize.fromJson(message)
+		      .then(m => {
+			      switch(m.type){
+			        case 'MINITOUCH':
+			          let commands = m.commands.join('\r\n');
+			          this.writeTouch(commands+'\r\n');
+			          break;
+			        case 'KEYEVENT':
+			          this.sendKeyEvents(m.commands);
+			          break;
+			      }
+		  	  });
 	    }
 	}
 
@@ -79,21 +78,23 @@ class Server {
  		this.minitouch.write(commands);
 	}
 
-	connect(){
+	connect(deviceInfo){
 	
 		this.wss.on('connection', (ws) => {
 
-		  console.info(`======] Client connected to websocket [======`, this.deviceInfo);
+		  console.info(`======] Client connected to websocket [======`, deviceInfo);
 
 		  ws.on('message', this.onMessage.bind(this));
 		  ws.on('close', this.onClose.bind(this));
 
 		  //Send deviceInfo to client
-		  if(Object.keys(this.deviceInfo).length){
-		  	let payload = Serialize.toJson(this.deviceInfo);
-		    ws.send(payload);
-		    this.minicap.initialize(ws).then(status => console.log(status)).catch(error => console.error(error));
-		  	this.minitouch.initialize().then(status => console.log(status)).catch(error => console.error(error));
+		  if(Object.keys(deviceInfo).length){
+		  	Serialize.toJson(deviceInfo)
+			  	.then(payload => {
+				    ws.send(payload);
+				    this.minicap.initialize(ws).then(status => console.log(status)).catch(error => console.error(error));
+				  	this.minitouch.initialize().then(status => console.log(status)).catch(error => console.error(error));
+			  	});
 		  }else{
 		  	console.error(`!!!===] Device Info not Adequate for Client to Render [===!!! `);
 		  }
@@ -101,8 +102,8 @@ class Server {
 		});
 	}
 
-	getMinitouchInfo(){
-
+	getMinitouchInfo(deviceInfo={}){
+		
 		return new Promise((resolve, reject) => {
 
 			console.log(`Getting Minitouch Info`);
@@ -118,14 +119,14 @@ class Server {
 			    let maxY = info[3];
 			    let maxPressure = info[4];
 
-			    this.deviceInfo.maxContacts = maxContacts;
-			    this.deviceInfo.maxX = maxX;
-			    this.deviceInfo.maxY = maxY;
-			    this.deviceInfo.maxPressure = maxPressure;
+			    deviceInfo.maxContacts = Number(maxContacts);
+			    deviceInfo.maxX = Number(maxX);
+			    deviceInfo.maxY = Number(maxY);
+			    deviceInfo.maxPressure = Number(maxPressure);
 
 			    nc.kill('SIGKILL');
 
-			    resolve(this.deviceInfo);
+			    resolve(deviceInfo);
 			  }catch(error){
 			    nc.kill('SIGKILL');
 			    exec(`fuser ${this.minitouch_port}/tcp`);
@@ -153,7 +154,8 @@ class Server {
 		});
 	}
 
-	getDeviceResolution(){
+	getDeviceResolution(deviceInfo){
+		
 		return new Promise((resolve, reject) => {
 			console.log(`Getting ADB Device Info`);
 
@@ -165,10 +167,10 @@ class Server {
 			    let width = info.split('x')[0];
 
 			    let height = info.split('x')[1];
-			    this.deviceInfo.width = width;
-			    this.deviceInfo.height = height;
+			    deviceInfo.width = Number(width);
+			    deviceInfo.height = Number(height);
 			    
-			    resolve(this.deviceInfo);
+			    resolve(deviceInfo);
 			  }catch(error){
 			  	reject(error);
 			  }
