@@ -1,8 +1,14 @@
 const net = require('net');
 
+let instance;
+
 class Minicap {
 
 	constructor(port){
+		if(!instance){
+			instance = this;
+		}
+
 		this.ws = null;
 
 		this.screenStream = null;
@@ -24,6 +30,8 @@ class Minicap {
 		    orientation: 0, 
 		    quirks: 0
 		 };
+
+		 return instance;
 	}
 
 	initialize(ws){

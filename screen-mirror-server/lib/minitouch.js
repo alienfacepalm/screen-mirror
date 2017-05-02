@@ -3,11 +3,19 @@ const isJSON = require('is-json');
 
 const Serialize = require('./serialize');
 
+let instance;
+
 class Minitouch {
 
 	constructor(port){
+		if(!instance){
+			instance = this;
+		}
+
 		this.touchStream = null;
 		this.port = port;
+
+		return instance;
 	}
 
 	initialize(){	

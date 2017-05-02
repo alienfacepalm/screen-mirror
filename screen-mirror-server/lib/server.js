@@ -10,9 +10,15 @@ const Minicap = require('./minicap');
 const Minitouch = require('./minitouch');
 const Serialize = require('./serialize');
 
+let instance;
+
 class Server {
 
 	constructor(){
+		if(!instance){
+			instance = this;
+		}
+
 		this.app = express();
 		this.server = null;
 		this.minicap_port = 1717;
@@ -21,6 +27,8 @@ class Server {
 
 		this.minicap = new Minicap(this.minicap_port);
 		this.minitouch = new Minitouch(this.minitouch_port);
+
+		return instance;
 	}
 
 	initialize(){
