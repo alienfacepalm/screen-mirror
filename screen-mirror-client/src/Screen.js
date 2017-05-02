@@ -3,7 +3,6 @@
 
 import React, {Component} from 'react';
 
-import isJSON from 'is-json';
 import {Icon} from 'react-fa';
 import Serializer from './lib/serializer';
 
@@ -20,7 +19,8 @@ class Screen extends Component {
 		this.canvas = null;
 		this.endpoint = `${environment.middleware.protocol}://${environment.middleware.endpoint}:${environment.middleware.port}`;
 		this.websocket = new WebSocket(this.endpoint);
-		this.serializer = new Serializer('json');
+		
+		this.serializer = new Serializer('json'); //json or protobuf
 
 		this.commands = [];
 
@@ -88,21 +88,21 @@ class Screen extends Component {
 		}
 
 		this.websocket.onmessage = (payload) => {
-			//When ported to MCB this change as well as the socket server
-			
 
-			if(isJSON(payload.data)){
-
+			//check if payload is a jpeg
+			if(payload.data instanceof Blob){
+				this.updateImage(payload.data);
+			}else{
 				this.serializer.from(payload.data)
 					.then(data => {
 						if(data){
 								this.setState({device: {
-												width: data.width,
-								                height: data.height,
-								                maxX: data.maxX,
-								                maxY: data.maxY,
-								                maxContacts: data.maxContacts,
-								                maxPressure: data.maxPressure
+												width: data.width || 0,
+								                height: data.height || 0,
+								                maxX: data.maxX || 0,
+								                maxY: data.maxY || 0,
+								                maxContacts: data.maxContacts || 0,
+								                maxPressure: data.maxPressure || 0
 								               }
 								             });	
 							this.pressure = Number(this.state.device.maxPressure)=== 0 ? 0 : 50;
@@ -112,11 +112,8 @@ class Screen extends Component {
 					.catch(error => {
 						console.error(error)
 					});
-				
-			}else{
-				//Step 4: Websocket receives blob data from minicap
-				this.updateImage(payload.data);
 			}
+
 		}
 
 		/*
@@ -141,6 +138,7 @@ class Screen extends Component {
 	}
 
 	updateImage(data){
+		console.log(data)
 		if(this.ctx){
 			let blob = new Blob([data], {type: 'image/jpeg'});
 			let image = new Image();
@@ -278,8 +276,11 @@ class Screen extends Component {
 					commands.push(keycodes.map[16]);
 				}
 				commands.push(androidKeycode);
-				let message = {type: 'KEYEVENT', commands: commands};
-				this.websocket.send(JSON.stringify(message));
+				this.serializer.to({type: 'KEYEVENT', commands: commands})
+					.then(message => {
+						this.websocket.send(message);
+					})
+					.catch(error => console.error(error));
 			}
 		}
 	}
@@ -298,22 +299,31 @@ class Screen extends Component {
 	menu(){
 		console.log(`======] Menu Command [======`);
 
-		let message = {type: 'KEYEVENT', commands: [keycodes.android[`KEYCODE_APP_SWITCH`]]};
-		this.websocket.send(JSON.stringify(message));
+		this.serializer.to({type: 'KEYEVENT', commands: [keycodes.android[`KEYCODE_APP_SWITCH`]]})
+			.then(message => {
+				this.websocket.send(message);
+			})
+			.catch(error => console.error(error));
 	}	
 
 	home(){
 		console.log(`======] Home Command [======`);
 
-		let message = {type: 'KEYEVENT', commands: [keycodes.android[`KEYCODE_HOME`]]};
-		this.websocket.send(JSON.stringify(message));
+		this.serializer.to({type: 'KEYEVENT', commands: [keycodes.android[`KEYCODE_HOME`]]})
+			.then(message => {
+				this.websocket.send(message);
+			})
+			.catch(error => console.error(error));
 	}
 
 	back(){
 		console.log(`======] Back Command [======`);
 
-		let message = {type: 'KEYEVENT', commands: [keycodes.android[`KEYCODE_BACK`]]};
-		this.websocket.send(JSON.stringify(message));
+		this.serializer.to({type: 'KEYEVENT', commands: [keycodes.android[`KEYCODE_BACK`]]})
+			.then(message => {
+				this.websocket.send(message);
+			})
+			.catch(error => console.error(error));
 	}
 
 
