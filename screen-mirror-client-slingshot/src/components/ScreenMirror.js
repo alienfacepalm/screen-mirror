@@ -115,7 +115,7 @@ class ScreenMirror extends Component {
 
         //STEP 3: initialize the canvas using the device data sent from server, add events
     initializeCanvas(){
-        console.log(`======] Init Canvas [======`, );
+        console.log(`======] Init Canvas [======`, this.props);
 
         let width = this.props.deviceInfo.width,
             height = this.props.deviceInfo.height;
@@ -251,6 +251,7 @@ class ScreenMirror extends Component {
         this.canvas.style.cursor = 'pointer';
         this.props.setFocused(false);
         if(this.props.swiping){
+          console.log(`is swiping`)
             this.interactEnd();
         }
     }

@@ -5,12 +5,16 @@ import * as actions from '../actions/screenMirrorActions';
 import ScreenMirror from '../components/ScreenMirror';
 
 export const ScreenMirrorPage = props => {
+  console.log(`PAGE`, props)
   return (
     <ScreenMirror 
       deviceInfo={props.deviceInfo}
       setDeviceInfo={props.actions.setDeviceInfo}
+      swiping={props.swiping}
       setSwiping={props.actions.setSwiping}
+      focused={props.focused}
       setFocused={props.actions.setFocused}
+      shiftDown={props.shiftDown}
       setShiftDown={props.actions.setShiftDown}
     />
   );
@@ -18,11 +22,15 @@ export const ScreenMirrorPage = props => {
 
 ScreenMirrorPage.propTypes = {
   actions: PropTypes.object.isRequired,
-  deviceInfo: PropTypes.object.isRequired
+  //deviceInfo: PropTypes.object.isRequired
 };
 
+//!!!IMPORTANT!!!
 const mapStateToProps = (state) => {
   return {
+    swiping: state.screenMirror.swiping,
+    focused: state.screenMirror.focused,
+    shiftDown: state.screenMirror.shiftDown,
     deviceInfo: state.screenMirror.deviceInfo
   };
 }
