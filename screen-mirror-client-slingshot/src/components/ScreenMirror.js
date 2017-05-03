@@ -21,7 +21,6 @@ class ScreenMirror extends Component {
 
         this.commands = [];
 
-        //protobuf commands
         this.touchDown = null;
         this.touchMove = null;
         this.touchUp = null;
@@ -30,23 +29,6 @@ class ScreenMirror extends Component {
 
         this.pressure = null;
 
-
-        //State will be done with Redux when moved to MCB
-        /*
-        this.state = {
-            swiping: false,
-            focused: false,
-            shiftDown: false,
-            device: {
-                width: null,
-                height: null,
-                maxX: null,
-                maxY:null,
-                maxContacts: null,
-                maxPressure: null
-            }
-        };
-        */
     }
 
     //STEP 2: listen on websocket for needed device data, then issues STEP 3 to init canvas 
@@ -115,7 +97,7 @@ class ScreenMirror extends Component {
 
         //STEP 3: initialize the canvas using the device data sent from server, add events
     initializeCanvas(){
-        console.log(`======] Init Canvas [======`, this.props);
+        console.log(`======] Init Canvas [======`);
 
         let width = this.props.deviceInfo.width,
             height = this.props.deviceInfo.height;
@@ -251,7 +233,6 @@ class ScreenMirror extends Component {
         this.canvas.style.cursor = 'pointer';
         this.props.setFocused(false);
         if(this.props.swiping){
-          console.log(`is swiping`)
             this.interactEnd();
         }
     }

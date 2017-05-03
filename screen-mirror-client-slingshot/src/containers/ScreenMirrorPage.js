@@ -5,7 +5,6 @@ import * as actions from '../actions/screenMirrorActions';
 import ScreenMirror from '../components/ScreenMirror';
 
 export const ScreenMirrorPage = props => {
-  console.log(`PAGE`, props)
   return (
     <ScreenMirror 
       deviceInfo={props.deviceInfo}
@@ -22,7 +21,7 @@ export const ScreenMirrorPage = props => {
 
 ScreenMirrorPage.propTypes = {
   actions: PropTypes.object.isRequired,
-  //deviceInfo: PropTypes.object.isRequired
+  deviceInfo: PropTypes.object.isRequired
 };
 
 //!!!IMPORTANT!!!
