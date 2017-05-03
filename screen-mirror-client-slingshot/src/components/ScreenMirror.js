@@ -251,7 +251,7 @@ class ScreenMirror extends Component {
 
         let keycode = event.which;
         if(keycode === 16){
-            this.setShiftDown(true);
+            props.setShiftDown(true);
         }
         
         //TODO: figure out how to use SHIFT and CAPS lock
@@ -278,7 +278,7 @@ class ScreenMirror extends Component {
         let keycode = event.which;
         console.log(keycode, 'up');
         if(keycode === 16){
-            this.setShiftDown(false);
+            props.setShiftDown(false);
         }
     }
 
