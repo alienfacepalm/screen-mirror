@@ -31,7 +31,6 @@ class Serializer {
 	}
 
 	json(direction, payload){
-		console.log(`Conversion ${direction}`, payload);
 		let output = null;
 		switch(direction){
 			case 'to':

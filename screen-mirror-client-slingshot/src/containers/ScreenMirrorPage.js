@@ -1,5 +1,4 @@
-import React from 'react';
-import PropTypes from 'prop-types';
+import React, {PropTypes} from 'react';
 import {connect} from 'react-redux';
 import {bindActionCreators} from 'redux';
 import * as actions from '../actions/screenMirrorActions';
@@ -8,29 +7,30 @@ import ScreenMirror from '../components/ScreenMirror';
 export const ScreenMirrorPage = props => {
   return (
     <ScreenMirror 
-      getDeviceInfo={props.getDeviceInfo}
+      deviceInfo={props.deviceInfo}
+      setDeviceInfo={props.actions.setDeviceInfo}
+      setSwiping={props.actions.setSwiping}
+      setFocused={props.actions.setFocused}
+      setShiftDown={props.actions.setShiftDown}
     />
   );
 };
 
 ScreenMirrorPage.propTypes = {
   actions: PropTypes.object.isRequired,
-  //device: PropTypes.object.isRequired
+  deviceInfo: PropTypes.object.isRequired
 };
 
-function mapStateToProps(state) {
+const mapStateToProps = (state) => {
   return {
-    device: state.device
+    deviceInfo: state.screenMirror.deviceInfo
   };
 }
 
-function mapDispatchToProps(dispatch) {
+const mapDispatchToProps = (dispatch) => {
   return {
     actions: bindActionCreators(actions, dispatch)
   };
 }
 
-export default connect(
-  mapStateToProps,
-  mapDispatchToProps
-)(ScreenMirrorPage);
+export default connect(mapStateToProps, mapDispatchToProps)(ScreenMirrorPage);

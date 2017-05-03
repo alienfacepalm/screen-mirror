@@ -1,7 +1,7 @@
 const environment = {
 	middleware: {
 		protocol: 'ws',
-		endpoint: '192.168.112.133',
+		endpoint: '192.168.7.87',
 		port: 9002
 	}	
 };

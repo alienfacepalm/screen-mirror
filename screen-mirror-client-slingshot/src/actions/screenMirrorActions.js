@@ -1,32 +1,44 @@
-//import * as types from '../constants/actionTypes';
+import * as types from '../constants/actionTypes';
 
-/*
-import {getFormattedDateTime} from '../utils/dateHelper';
-
-// example of a thunk using the redux-thunk middleware
-export function saveFuelSavings(settings) {
-  return function (dispatch) {
-    // thunks allow for pre-processing actions, calling apis, and dispatching multiple actions
-    // in this case at this point we could call a service that would persist the fuel savings
+export function setDeviceInfo(data){
+  return (dispatch) => {
     return dispatch({
-      type: types.SAVE_FUEL_SAVINGS,
-      dateModified: getFormattedDateTime(),
-      settings
+      type: types.DEVICE_INFO,
+      modified: new Date().getTime(),
+      ...data
     });
   };
 }
 
-export function calculateFuelSavings(settings, fieldName, value) {
-  return {
-    type: types.CALCULATE_FUEL_SAVINGS,
-    dateModified: getFormattedDateTime(),
-    settings,
-    fieldName,
-    value
+export function setSwiping(data){
+  console.log(`Set swiping`, data);
+  return (dispatch) => {
+    return dispatch({
+      type: types.SWIPING,
+      modified: new Date().getTime(),
+      data
+    });
   };
 }
-*/
 
-export function getDeviceInfo(){
-  return "Get Device Info";
+export function setShiftDown(data){
+  return (dispatch) => {
+    console.log(`Set shift down`, data);
+    return dispatch({
+      type: types.SHIFT_DOWN,
+      modified: new Date().getTime(),
+      data
+    });
+  };
+}
+
+export function setFocused(data){
+  console.log(`Set focused`, data);
+  return (dispatch) => {
+    return dispatch({
+      type: types.FOCUSED,
+      modified: new Date().getTime(),
+      data
+    });
+  };
 }

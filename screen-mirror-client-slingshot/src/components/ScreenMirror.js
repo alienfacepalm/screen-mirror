@@ -30,7 +30,9 @@ class ScreenMirror extends Component {
 
         this.pressure = null;
 
+
         //State will be done with Redux when moved to MCB
+        /*
         this.state = {
             swiping: false,
             focused: false,
@@ -44,6 +46,7 @@ class ScreenMirror extends Component {
                 maxPressure: null
             }
         };
+        */
     }
 
     //STEP 2: listen on websocket for needed device data, then issues STEP 3 to init canvas 
@@ -65,17 +68,20 @@ class ScreenMirror extends Component {
             }else{
                 this.serializer.from(payload.data)
                     .then(data => {
+                        console.log(`Device Info Received`, data);
                         if(data){
-                                this.setState({device: {
-                                                width: data.width || 0,
-                                                height: data.height || 0,
-                                                maxX: data.maxX || 0,
-                                                maxY: data.maxY || 0,
-                                                maxContacts: data.maxContacts || 0,
-                                                maxPressure: data.maxPressure || 0
-                                               }
-                                             });    
-                            this.pressure = Number(this.state.device.maxPressure)=== 0 ? 0 : 50;
+                            //Call redux Action to update deviceInfo state
+                            let deviceInfo = this.props.setDeviceInfo({
+                                            width: data.width || 0,
+                                            height: data.height || 0,
+                                            maxX: data.maxX || 0,
+                                            maxY: data.maxY || 0,
+                                            maxContacts: data.maxContacts || 0,
+                                            maxPressure: data.maxPressure || 0
+                                       });
+
+                            this.pressure = Number(deviceInfo.maxPressure) === 0 ? 0 : 50;
+
                         }
                         this.initializeCanvas();
                     })
@@ -109,13 +115,16 @@ class ScreenMirror extends Component {
 
         //STEP 3: initialize the canvas using the device data sent from server, add events
     initializeCanvas(){
-        console.log(`======] Init Canvas [======`, this.state);
+        console.log(`======] Init Canvas [======`, );
 
-        if(this.state.device.width && this.state.device.height){
+        let width = this.props.deviceInfo.width,
+            height = this.props.deviceInfo.height;
+
+        if(width && height){
             this.canvas = document.createElement('canvas');
             this.canvas.id = 'screen-canvas';
-            this.canvas.width = this.state.device.width/2;
-            this.canvas.height = this.state.device.height/2;
+            this.canvas.width = width/2;
+            this.canvas.height = height/2;
             this.canvas.style = 'margin: 50px; border: 1px solid black; cursor: pointer;';
             this.canvas.onmouseover = this.cursorOver.bind(this);
             this.canvas.onmouseout = this.cursorOut.bind(this);
@@ -131,6 +140,7 @@ class ScreenMirror extends Component {
         }else{
             alert(`Device resolution failed to be detected`);
         }
+        
     }
 
     updateImage(data){
@@ -146,8 +156,8 @@ class ScreenMirror extends Component {
     }
 
     calculatePosition(event){
-        let x = Math.ceil(this.state.device.maxX/(this.canvas.width/event.offsetX));
-        let y = Math.ceil(this.state.device.maxY/(this.canvas.height/event.offsetY));
+        let x = Math.ceil(this.props.deviceInfo.maxX/(this.canvas.width/event.offsetX));
+        let y = Math.ceil(this.props.deviceInfo.maxY/(this.canvas.height/event.offsetY));
 
         return {x: x, y: y};
     }
@@ -191,7 +201,7 @@ class ScreenMirror extends Component {
     //Mouse events, click and swipe
     interactStart(event){
         this.canvas.style.cursor = 'move';
-        this.setState({swiping: true});
+        this.props.setSwiping(true);
 
         let pos = this.calculatePosition(event);
         
@@ -200,7 +210,7 @@ class ScreenMirror extends Component {
     }
 
     interactMove(event){
-        if(this.state.swiping){
+        if(this.props.swiping){
             let pos = this.calculatePosition(event);
             this.commands.push(`m 0 ${pos.x} ${pos.y} ${this.pressure}`);
             this.commands.push(`c`);
@@ -211,7 +221,8 @@ class ScreenMirror extends Component {
 
     interactEnd(){
         this.canvas.style.cursor = 'pointer';
-        this.setState({swiping: false});
+        this.props.setSwiping(false);
+
 
         this.commands.push(`u 0`);
         this.commands.push(`c`);
@@ -221,15 +232,15 @@ class ScreenMirror extends Component {
 
     screenContainerDown(){
         console.log(`======] Container down [======`);
-        this.setState({swiping: true});
+        this.props.setSwiping(true);
     }
 
     cursorOver(){
         console.log(`======] Cursor over canvas [======`);
 
         this.canvas.style.cursor = 'pointer';
-        this.setState({focused: true});
-        if(this.state.swiping){
+        this.props.setFocused(true);
+        if(this.props.swiping){
             this.interactStart(event);
         }
     }
@@ -238,8 +249,8 @@ class ScreenMirror extends Component {
         console.log(`======] Cursor left canvas [======`);
 
         this.canvas.style.cursor = 'pointer';
-        this.setState({focused: false});
-        if(this.state.swiping){
+        this.props.setFocused(false);
+        if(this.props.swiping){
             this.interactEnd();
         }
     }
@@ -258,16 +269,16 @@ class ScreenMirror extends Component {
 
         let keycode = event.which;
         if(keycode === 16){
-            this.setState({shiftDown: true});
+            this.setShiftDown(true);
         }
         
         //TODO: figure out how to use SHIFT and CAPS lock
-        if(this.state.focused){
+        if(this.props.focused){
             let androidKeycode = keycodes.map[keycode];
             console.log(`======] KeyCode ${keycode} -> ${androidKeycode} [======`);
             if(androidKeycode){
                 let commands = [];
-                if(this.state.shiftDown){
+                if(this.props.shiftDown){
                     commands.push(keycodes.map[16]);
                 }
                 commands.push(androidKeycode);
@@ -285,7 +296,7 @@ class ScreenMirror extends Component {
         let keycode = event.which;
         console.log(keycode, 'up');
         if(keycode === 16){
-            this.setState({shiftDown: false});
+            this.setShiftDown(false);
         }
     }
 
