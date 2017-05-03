@@ -54,13 +54,13 @@ class ScreenMirror extends Component {
                         if(data){
                             //Call redux Action to update deviceInfo state
                             let deviceInfo = this.props.setDeviceInfo({
-                                            width: data.width || 0,
-                                            height: data.height || 0,
-                                            maxX: data.maxX || 0,
-                                            maxY: data.maxY || 0,
-                                            maxContacts: data.maxContacts || 0,
-                                            maxPressure: data.maxPressure || 0
-                                       });
+                                                  width: data.width || 0,
+                                                  height: data.height || 0,
+                                                  maxX: data.maxX || 0,
+                                                  maxY: data.maxY || 0,
+                                                  maxContacts: data.maxContacts || 0,
+                                                  maxPressure: data.maxPressure || 0
+                                             });
 
                             this.pressure = Number(deviceInfo.maxPressure) === 0 ? 0 : 50;
 
