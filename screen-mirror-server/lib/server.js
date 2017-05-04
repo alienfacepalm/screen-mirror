@@ -46,7 +46,7 @@ class Server {
 				console.log(`Connecting WebSocket`);
 				this.connect(data);
 			})
-			.catch(error => console.error(`ERROR`, error));
+			.catch(error => console.error(`ERROR`, error.toString()));
 	}
 
 	onMessage(message){
