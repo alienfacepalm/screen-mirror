@@ -27,17 +27,14 @@ ScreenMirrorPage.propTypes = {
 //!!!IMPORTANT!!!
 const mapStateToProps = (state) => {
   return {
-    swiping: state.screenMirror.swiping,
-    focused: state.screenMirror.focused,
-    shiftDown: state.screenMirror.shiftDown,
     deviceInfo: state.screenMirror.deviceInfo
   };
-}
+};
 
 const mapDispatchToProps = (dispatch) => {
   return {
     actions: bindActionCreators(actions, dispatch)
   };
-}
+};
 
 export default connect(mapStateToProps, mapDispatchToProps)(ScreenMirrorPage);

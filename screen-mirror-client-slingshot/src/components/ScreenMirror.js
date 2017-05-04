@@ -8,7 +8,6 @@ import * as keycodes from '../utils/keycodes';
 
 class ScreenMirror extends Component {
 
-    //Step 1: open websocket
     constructor(props, context){
         super(props, context);
 
@@ -29,9 +28,14 @@ class ScreenMirror extends Component {
 
         this.pressure = null;
 
+        this.state = {
+            focused: false,
+            swiping: false,
+            shiftDown: false
+        };
+
     }
 
-    //STEP 2: listen on websocket for needed device data, then issues STEP 3 to init canvas 
     componentDidMount() {
         console.log(`Screen component mounted`);
 
@@ -95,7 +99,6 @@ class ScreenMirror extends Component {
 
     }
 
-        //STEP 3: initialize the canvas using the device data sent from server, add events
     initializeCanvas(){
         console.log(`======] Init Canvas [======`);
 
@@ -162,8 +165,6 @@ class ScreenMirror extends Component {
     }
     */
 
-    //Step 7: command sent to server
-    //Send minitouch commands to server
     sendCommands(){
         console.log(`======] Commands [======`, this.commands);
 
@@ -173,17 +174,11 @@ class ScreenMirror extends Component {
                 this.commands = [];
             })
             .catch(error => console.error(error));
-
     }
 
-
-
-    //Step 6: User clicks something on canvas
-    //Breakout to lib
-    //Mouse events, click and swipe
     interactStart(event){
         this.canvas.style.cursor = 'move';
-        this.props.setSwiping(true);
+        this.setState({swiping: true});
 
         let pos = this.calculatePosition(event);
         
@@ -192,7 +187,7 @@ class ScreenMirror extends Component {
     }
 
     interactMove(event){
-        if(this.props.swiping){
+        if(this.state.swiping){
             let pos = this.calculatePosition(event);
             this.commands.push(`m 0 ${pos.x} ${pos.y} ${this.pressure}`);
             this.commands.push(`c`);
@@ -203,7 +198,7 @@ class ScreenMirror extends Component {
 
     interactEnd(){
         this.canvas.style.cursor = 'pointer';
-        this.props.setSwiping(false);
+        this.setState({swiping: false});
 
 
         this.commands.push(`u 0`);
@@ -214,15 +209,15 @@ class ScreenMirror extends Component {
 
     screenContainerDown(){
         console.log(`======] Container down [======`);
-        this.props.setSwiping(true);
+        this.setState({swiping: true});
     }
 
     cursorOver(){
         console.log(`======] Cursor over canvas [======`);
 
         this.canvas.style.cursor = 'pointer';
-        this.props.setFocused(true);
-        if(this.props.swiping){
+        this.setState({focused: true});
+        if(this.state.swiping){
             this.interactStart(event);
         }
     }
@@ -231,8 +226,8 @@ class ScreenMirror extends Component {
         console.log(`======] Cursor left canvas [======`);
 
         this.canvas.style.cursor = 'pointer';
-        this.props.setFocused(false);
-        if(this.props.swiping){
+        this.setState({focused: true});
+        if(this.state.swiping){
             this.interactEnd();
         }
     }
@@ -243,24 +238,21 @@ class ScreenMirror extends Component {
         //let wheelDeltaY = event.wheelDeltaY;
     }
 
-    //Breakout to lib
-    //Key events
     keyDown(event){
         console.log(`======] Key Down [======`, event);
         event.preventDefault();
 
         let keycode = event.which;
         if(keycode === 16){
-            props.setShiftDown(true);
+            this.setState({shiftDown: true});
         }
         
-        //TODO: figure out how to use SHIFT and CAPS lock
-        if(this.props.focused){
+        if(this.state.focused){
             let androidKeycode = keycodes.map[keycode];
             console.log(`======] KeyCode ${keycode} -> ${androidKeycode} [======`);
             if(androidKeycode){
                 let commands = [];
-                if(this.props.shiftDown){
+                if(this.state.shiftDown){
                     commands.push(keycodes.map[16]);
                 }
                 commands.push(androidKeycode);
@@ -278,12 +270,10 @@ class ScreenMirror extends Component {
         let keycode = event.which;
         console.log(keycode, 'up');
         if(keycode === 16){
-            props.setShiftDown(false);
+            this.setState({shiftDown: false});
         }
     }
 
-    //Add to key events lib
-    //CANNED KEYEVENTS
     menu(){
         console.log(`======] Menu Command [======`);
 

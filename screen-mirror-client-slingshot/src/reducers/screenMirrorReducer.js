@@ -1,14 +1,6 @@
-import {
-  DEVICE_INFO, 
-  SWIPING, 
-  FOCUSED, 
-  SHIFT_DOWN
-} from '../constants/actionTypes';
+import {DEVICE_INFO} from '../constants/actionTypes';
 
 const defaultState = {
-  swiping: false, 
-  focused: false, 
-  shiftDown: false, 
   deviceInfo: {
     width: null,
     height: null,
@@ -23,7 +15,7 @@ export default function screenMirror(state=defaultState, action) {
 
   switch(action.type){
     case DEVICE_INFO:
-        let newState = {
+        return Object.assign({}, state, {
           deviceInfo: {
             width: action.width,
             height: action.height,
@@ -32,14 +24,7 @@ export default function screenMirror(state=defaultState, action) {
             maxContacts: action.maxContacts,
             maxPressure: action.maxPressure
           }
-        };
-        return Object.assign({}, state, newState);
-    case SWIPING: 
-      return Object.assign({}, state, {swiping: action.state});
-    case FOCUSED: 
-      return Object.assign({}, state, {focused: action.state});
-    case SHIFT_DOWN: 
-      return Object.assign({}, state, {shiftDown: action.state});
+        });
     default: 
         return state;
   }
